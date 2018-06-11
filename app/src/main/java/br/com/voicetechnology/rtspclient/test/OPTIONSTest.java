@@ -41,8 +41,7 @@ public class OPTIONSTest implements ClientListener
 
 		client.setTransport(new PlainTCP());
 		client.setClientListener(this);
-//		client.options("rtsp://47.52.242.22:554/xwh.webm", new URI("rtsp://47.52.242.22:554/xwh.webm"));
-		client.describe(new URI("rtsp://47.52.242.22:554/xwh.webm"));
+		client.options("rtsp://47.52.242.22:554/xwh.webm", new URI("rtsp://47.52.242.22:554/xwh.webm"));
 	}
 
 	@Override
