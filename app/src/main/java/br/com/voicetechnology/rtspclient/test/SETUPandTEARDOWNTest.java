@@ -34,7 +34,7 @@ import br.com.voicetechnology.rtspclient.transport.PlainTCP;
 
 public class SETUPandTEARDOWNTest implements ClientListener
 {
-	private final static String TARGET_URI = "rtsp://192.168.0.102/sample_50kbit.3gp";
+	private final static String TARGET_URI = "rtsp://47.52.242.22:554/xwh.webm";
 
 	public static void main(String[] args) throws Throwable
 	{
@@ -99,7 +99,7 @@ public class SETUPandTEARDOWNTest implements ClientListener
 						sessionSet(client);
 					break;
 				}
-			} else
+			} else if (request.getMethod()!= Request.Method.TEARDOWN)
 				client.teardown();
 		} catch(Throwable t)
 		{
@@ -129,7 +129,7 @@ public class SETUPandTEARDOWNTest implements ClientListener
 	
 	protected void sessionSet(Client client) throws IOException
 	{
-		client.teardown();	
+		client.teardown();
 	}
 
 	private int nextPort()

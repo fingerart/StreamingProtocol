@@ -47,7 +47,7 @@ class TransportThread extends Thread
 
 	public void setListener(TransportListener listener)
 	{
-		listener = new SafeTransportListener(listener);
+		this.listener = new SafeTransportListener(listener);
 	}
 
 	@Override
@@ -109,7 +109,7 @@ public class PlainTCP implements Transport
 		try
 		{
 			socket.close();
-		} catch(IOException e)
+		} catch(IOException ignored)
 		{
 		}
 	}

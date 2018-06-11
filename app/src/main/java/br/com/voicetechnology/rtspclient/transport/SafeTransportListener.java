@@ -67,7 +67,6 @@ class SafeTransportListener implements TransportListener
 	@Override
 	public void dataSent(Transport t)
 	{
-		// TODO Auto-generated method stub
 		if(behaviour != null)
 			try
 			{

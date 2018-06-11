@@ -31,6 +31,10 @@ public class SessionHeader extends BaseStringHeader
 	public SessionHeader(String header)
 	{
 		super(NAME, header);
+		int index = getRawValue().indexOf(";");
+		if (index > -1) {
+			setRawValue(getRawValue().substring(0, index));
+		}
 	}
 	
 }
