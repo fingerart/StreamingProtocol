@@ -48,7 +48,6 @@ public class RTSPRequest extends RTSPMessage implements Request
 	{
 		this.method = method;
 		this.uri = new URI(uri).toString();
-		;
 
 		super.setLine(method.toString() + ' ' + uri + ' ' + RTSP_VERSION_TOKEN);
 	}
