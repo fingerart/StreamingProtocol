@@ -53,8 +53,8 @@ public class OPTIONSTest implements ClientListener
 	@Override
 	public void response(Client client, Request request, Response response)
 	{
-		System.out.println("Got response: \n" + response);
 		System.out.println("for the request: \n" + request);
+		System.out.println("Got response: \n" + response);
 	}
 
 	@Override
