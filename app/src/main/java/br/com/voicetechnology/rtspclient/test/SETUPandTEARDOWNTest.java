@@ -70,17 +70,17 @@ public class SETUPandTEARDOWNTest implements ClientListener
 	{
 		try
 		{
-			System.out.println("Got response: \n" + response);
 			System.out.println("for the request: \n" + request);
+			System.out.println("Got response: \n" + response);
 			if(response.getStatusCode() == 200)
 			{
 				switch(request.getMethod())
 				{
 				case DESCRIBE:
 					System.out.println(resourceList);
+					controlURI = request.getURI();
 					if(resourceList.get(0).equals("*"))
 					{
-						controlURI = request.getURI();
 						resourceList.remove(0);
 					}
 					if(resourceList.size() > 0)
@@ -118,7 +118,6 @@ public class SETUPandTEARDOWNTest implements ClientListener
 	{
 		// searches for control: session and media arguments.
 		final String target = "control:";
-		System.out.println("Session Descriptor\n" + descriptor);
 		int position = -1;
 		while((position = descriptor.indexOf(target)) > -1)
 		{

@@ -29,9 +29,9 @@ import br.com.voicetechnology.rtspclient.concepts.Request.Method;
 /**
  * Testing the PLAY message. RTP Stream can be checked with Wireshark or a play
  * with RTP only capability.
- * 
+ *
  * @author paulo
- * 
+ *
  */
 public class PLAYTest extends SETUPandTEARDOWNTest
 {
@@ -52,7 +52,6 @@ public class PLAYTest extends SETUPandTEARDOWNTest
 		try
 		{
 			super.response(client, request, response);
-
 			if(request.getMethod() == Method.PLAY && response.getStatusCode() == 200)
 			{
 				Thread.sleep(10000);
