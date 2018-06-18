@@ -112,7 +112,7 @@ public class Session {
 	private Handler mHandler;
 
 	/** 
-	 * Creates a streaming session that can be customized by adding tracks.
+	 * 创建一个Streaming会话,通过添加跟踪可以定制。
 	 */
 	public Session() {
 		long uptime = System.currentTimeMillis();
