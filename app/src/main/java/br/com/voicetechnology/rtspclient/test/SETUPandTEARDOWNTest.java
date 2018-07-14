@@ -34,7 +34,7 @@ import br.com.voicetechnology.rtspclient.transport.PlainTCP;
 
 public class SETUPandTEARDOWNTest implements ClientListener
 {
-	private final static String TARGET_URI = "rtsp://47.52.242.22:554/xwh.webm";
+	private final static String TARGET_URI = "rtsp://14.29.172.223/NeverPlay.mp3";
 
 	public static void main(String[] args) throws Throwable
 	{

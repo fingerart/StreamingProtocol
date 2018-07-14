@@ -14,12 +14,4 @@ public class ExampleUnitTest {
     public void addition_isCorrect() throws Exception {
         assertEquals(4, 2 + 2);
     }
-
-    @Test
-    public void name() throws Exception {
-        byte b = 0;
-        b |= (2 << 6);
-        b |= 1<<5;
-        System.out.println(Integer.toBinaryString(b & 0xFF));
-    }
 }

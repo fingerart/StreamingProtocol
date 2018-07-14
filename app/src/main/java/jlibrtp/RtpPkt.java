@@ -100,7 +100,7 @@ public class RtpPkt {
 		if(aRawPkt == null) {
 			System.out.println("RtpPkt(byte[]) Packet null");
 		}
-		
+
 		int remOct = packetSize - 12;
 		if(remOct >= 0) {
 			rawPkt = aRawPkt;	//Store it
@@ -193,7 +193,7 @@ public class RtpPkt {
 		return csrcArray;
 	}
 
-	/** 
+	/**
 	 *  Encodes the a
 	 */
 	protected byte[] encode() {

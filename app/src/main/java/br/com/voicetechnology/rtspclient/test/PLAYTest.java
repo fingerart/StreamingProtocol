@@ -52,11 +52,11 @@ public class PLAYTest extends SETUPandTEARDOWNTest
 		try
 		{
 			super.response(client, request, response);
-			if(request.getMethod() == Method.PLAY && response.getStatusCode() == 200)
-			{
-				Thread.sleep(10000);
-				client.teardown();
-			}
+//			if(request.getMethod() == Method.PLAY && response.getStatusCode() == 200)
+//			{
+//				Thread.sleep(10000);
+//				client.teardown();
+//			}
 		} catch(Throwable t)
 		{
 			generalError(client, t);
