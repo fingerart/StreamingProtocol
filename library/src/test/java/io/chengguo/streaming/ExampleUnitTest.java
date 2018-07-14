@@ -2,6 +2,8 @@ package io.chengguo.streaming;
 
 import org.junit.Test;
 
+import java.util.Date;
+
 import static org.junit.Assert.*;
 
 /**
@@ -13,5 +15,13 @@ public class ExampleUnitTest {
     @Test
     public void addition_isCorrect() throws Exception {
         assertEquals(4, 2 + 2);
+    }
+
+    @Test
+    public void name() throws Exception {
+        byte b = 0;
+        b |= (2 << 6);
+        b |= 1<<5;
+        System.out.println(Integer.toBinaryString(b & 0xFF));
     }
 }

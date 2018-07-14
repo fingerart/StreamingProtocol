@@ -382,7 +382,9 @@ public abstract class VideoStream extends MediaStream {
 			byte buffer[] = new byte[4];
 			// Skip all atoms preceding mdat atom
 			while (!Thread.interrupted()) {
-				while (is.read() != 'm');
+				while (is.read() != 'm'){
+					;
+				}
 				is.read(buffer,0,3);
 				if (buffer[0] == 'd' && buffer[1] == 'a' && buffer[2] == 't') break;
 			}
