@@ -37,30 +37,6 @@ public class SupportMethodHeader extends StringHeader {
     }
 
     /**
-     * 添加支持的Method
-     *
-     * @param method
-     */
-    public void addSupportMethod(Method method) {
-        if (!methods.contains(method)) {
-            methods.add(method);
-            updateRawValue();
-        }
-    }
-
-    /**
-     * 更新
-     */
-    protected void updateRawValue() {
-        final String separator = ", ";
-        StringBuilder sb = new StringBuilder();
-        for (Method method : methods) {
-            sb.append(method.name()).append(separator);
-        }
-        sb.substring(0, sb.length() - separator.length());
-    }
-
-    /**
      * 是否支持指定的Method
      *
      * @param method
