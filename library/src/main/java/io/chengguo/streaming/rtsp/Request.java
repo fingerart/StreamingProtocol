@@ -8,13 +8,15 @@ import io.chengguo.streaming.rtsp.header.Header;
  * Created by fingerart on 2018-07-17.
  */
 public class Request {
-
+    private Line line;
     private Header header;
+
+
 
     /**
      * 请求行
      */
-    public class Line {
+    public static class Line {
         private Method method;
         private URI uri;
         private Version version;
