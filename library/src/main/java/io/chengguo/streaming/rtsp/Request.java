@@ -1,6 +1,8 @@
 package io.chengguo.streaming.rtsp;
 
 import java.net.URI;
+import java.util.ArrayList;
+import java.util.List;
 
 import io.chengguo.streaming.rtsp.header.Header;
 
@@ -9,9 +11,38 @@ import io.chengguo.streaming.rtsp.header.Header;
  */
 public class Request {
     private Line line;
-    private Header header;
+    private List<Header> headers = new ArrayList<>();
 
+    public Line getLine() {
+        return line;
+    }
 
+    public void setLine(Line line) {
+        this.line = line;
+    }
+
+    public List<Header> getHeaders() {
+        return headers;
+    }
+
+    public void setHeaders(List<Header> headers) {
+        this.headers = headers;
+    }
+
+    public void addHeader(Header header) {
+        this.headers.add(header);
+    }
+
+    @Override
+    public String toString() {
+        StringBuffer buffer = new StringBuffer(line.toString());
+        buffer.append("\r\n");
+        for (Header header : headers) {
+            buffer.append(header).append("\r\n");
+        }
+        buffer.append("\r\n");
+        return buffer.toString();
+    }
 
     /**
      * 请求行

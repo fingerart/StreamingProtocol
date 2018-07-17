@@ -18,6 +18,25 @@ public class StringHeader extends Header<String> {
     }
 
     @Override
+    public void setRawValue(String value) {
+        super.setRawValue(trySplitKV(value));
+    }
+
+    /**
+     * 尝试拆分Key: Value
+     *
+     * @param rawHeader
+     * @return
+     */
+    protected String trySplitKV(String rawHeader) {
+        String[] splitValue = Utils.splitSafely(rawHeader, ":");
+        if (splitValue.length == 2) {
+            return Utils.trimSafely(splitValue[1]);
+        }
+        return rawHeader;
+    }
+
+    @Override
     protected String parseValue(String value) {
         return Utils.trimSafely(value);
     }

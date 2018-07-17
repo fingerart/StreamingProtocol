@@ -35,11 +35,13 @@ public class Response {
 
     @Override
     public String toString() {
-        StringBuilder sb = new StringBuilder(line + "\r\n");
+        StringBuffer buffer = new StringBuffer(line.toString());
+        buffer.append("\r\n");
         for (Header header : headers) {
-            sb.append(header).append("\r\n");
+            buffer.append(header).append("\r\n");
         }
-        return sb.toString();
+        buffer.append("\r\n");
+        return buffer.toString();
     }
 
     public static class Line {
@@ -75,5 +77,9 @@ public class Response {
         public String toString() {
             return version + " " + statusCode + " " + statusMessage;
         }
+    }
+
+    public static class Body {
+
     }
 }

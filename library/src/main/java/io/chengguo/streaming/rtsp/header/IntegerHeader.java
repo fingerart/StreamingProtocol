@@ -2,8 +2,6 @@ package io.chengguo.streaming.rtsp.header;
 
 import android.support.annotation.NonNull;
 
-import static io.chengguo.streaming.utils.Utils.trimSafely;
-
 /**
  * 值为整数的Header
  * Created by fingerart on 2018-07-14.
