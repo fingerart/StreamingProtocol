@@ -1,7 +1,6 @@
 package io.chengguo.streaming.rtsp.header;
 
 import android.support.annotation.NonNull;
-import android.support.v4.util.ObjectsCompat;
 
 import java.util.Objects;
 
@@ -21,6 +20,7 @@ public abstract class Header<V> {
     }
 
     public Header(@NonNull String nameOrRawHeader) {
+        Objects.requireNonNull(nameOrRawHeader, "nameOrRawHeader not be null");
         int iSeparator = nameOrRawHeader.indexOf(":");
         if (iSeparator == -1) {
             setName(nameOrRawHeader);
