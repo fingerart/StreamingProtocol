@@ -23,7 +23,7 @@ public class ContentTypeHeaderTest {
 
     @Test
     public void isSupportType() throws Exception {
-
+        Assert.assertTrue(header.isSupportType(ContentTypeHeader.Type.SDP));
     }
 
 }

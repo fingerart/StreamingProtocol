@@ -1,5 +1,7 @@
 package io.chengguo.streaming.rtsp.header;
 
+import android.support.annotation.NonNull;
+
 /**
  * CSeqHeader
  * <p>
@@ -11,5 +13,9 @@ public class CSeqHeader extends IntegerHeader {
 
     public CSeqHeader(Integer value) {
         super(DEFAULT_NAME, value);
+    }
+
+    public CSeqHeader(@NonNull String nameOrRawHeader) {
+        super(nameOrRawHeader);
     }
 }
