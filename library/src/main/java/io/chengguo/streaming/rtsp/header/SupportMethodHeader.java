@@ -26,6 +26,7 @@ public class SupportMethodHeader extends StringHeader {
 
     public SupportMethodHeader(@NonNull String nameOrRawHeader) {
         super(nameOrRawHeader);
+        parseMethods(getRawValue());
     }
 
     public SupportMethodHeader(Method... methods) {

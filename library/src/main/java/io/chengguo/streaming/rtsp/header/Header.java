@@ -4,6 +4,8 @@ import android.support.annotation.NonNull;
 
 import java.util.Objects;
 
+import io.chengguo.streaming.utils.Utils;
+
 import static io.chengguo.streaming.utils.Utils.trimSafely;
 
 /**
@@ -26,7 +28,7 @@ public abstract class Header<V> {
             setName(nameOrRawHeader);
         } else {
             setName(nameOrRawHeader.substring(0, iSeparator));
-            setRawValue(parseValue(nameOrRawHeader.substring(++iSeparator)));
+            setRawValue(parseValue(Utils.trimSafely(nameOrRawHeader.substring(++iSeparator))));
         }
     }
 
