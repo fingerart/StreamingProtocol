@@ -6,10 +6,9 @@ import java.util.List;
 import io.chengguo.streaming.rtsp.header.Header;
 
 /**
- *
  * Created by fingerart on 2018-07-17.
  */
-public class Response {
+public class Response implements IMessage {
     private Line line;
     private List<Header> headers = new ArrayList<>();
 
@@ -40,8 +39,13 @@ public class Response {
         for (Header header : headers) {
             buffer.append(header).append("\r\n");
         }
-        buffer.append("\r\n");
+        buffer.append("\r\n").append("\r\n");
         return buffer.toString();
+    }
+
+    @Override
+    public byte[] toRaw() {
+        return toString().getBytes();
     }
 
     public static class Line {

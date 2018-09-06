@@ -10,11 +10,9 @@ public class SessionHeader extends StringHeader {
     public static final String DEFAULT_NAME = "Session";
     //Session: E7E25DEC;timeout=65
 
-    public SessionHeader(String name, String value) {
-        super(name, value);
-    }
-
     public SessionHeader(@NonNull String nameOrRawHeader) {
         super(nameOrRawHeader);
     }
+
+
 }

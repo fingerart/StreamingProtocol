@@ -48,7 +48,7 @@ public class MessageBuffer
 	 */
 	private Message message;
 
-	ArrayList<byte[]> data = new ArrayList<byte[]>();
+	ArrayList<byte[]> data = new ArrayList<>();
 	/**
 	 * Adds more data to buffer and ensures the sequence [data, newData] is
 	 * contiguous.
