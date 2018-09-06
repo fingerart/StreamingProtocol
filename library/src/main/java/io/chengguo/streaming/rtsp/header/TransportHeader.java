@@ -1,6 +1,8 @@
 package io.chengguo.streaming.rtsp.header;
 
-import android.util.SparseArray;
+import android.support.annotation.NonNull;
+
+import static io.chengguo.streaming.rtsp.header.TransportHeader.Specifier.UDP;
 
 /**
  * Transport
@@ -9,21 +11,144 @@ import android.util.SparseArray;
 public class TransportHeader extends StringHeader {
     public static final String DEFAULT_NAME = "Transport";
 
-    //Transport: RTP/AVP/UDP;unicast;client_port=6988-6989
-    //Transport: RTP/AVP;unicast;destination=113.104.167.226;source=172.17.0.2;client_port=6988-6989;server_port=6970-6971
-    //Transport: RTP/AVP/TCP;unicast;interleaved=0-1
-    //Transport: RTP/AVP/TCP;unicast;destination=113.104.167.226;source=172.17.0.2;interleaved=0-1
-    public TransportHeader(String value) {
-        super(DEFAULT_NAME, value);
+    private Specifier specifier = UDP;
+
+    private BroadcastType broadcastType = BroadcastType.unicast;
+
+    private String destination;
+
+    private String source;
+
+    private Mode mode = Mode.PLAY;
+
+    private PairPort clientPort;
+
+    private PairPort serverPort;
+
+    public TransportHeader(@NonNull String nameOrRawHeader) {
+        super(nameOrRawHeader);
     }
 
-    public enum Type {
-        UDP("RTP/AVP/UDP"), TCP("RTP/AVP/TCP"), DEFAULT("RTP/AVP");
+//    public TransportHeader(Builder builder) {
+//        super(builder);
+//    }
+
+    public Specifier getSpecifier() {
+        return specifier;
+    }
+
+    public void setSpecifier(Specifier specifier) {
+        this.specifier = specifier;
+    }
+
+    public BroadcastType getBroadcastType() {
+        return broadcastType;
+    }
+
+    public void setBroadcastType(BroadcastType broadcastType) {
+        this.broadcastType = broadcastType;
+    }
+
+    public String getDestination() {
+        return destination;
+    }
+
+    public void setDestination(String destination) {
+        this.destination = destination;
+    }
+
+    public String getSource() {
+        return source;
+    }
+
+    public void setSource(String source) {
+        this.source = source;
+    }
+
+    public Mode getMode() {
+        return mode;
+    }
+
+    public void setMode(Mode mode) {
+        this.mode = mode;
+    }
+
+    public PairPort getClientPort() {
+        return clientPort;
+    }
+
+    public void setClientPort(PairPort clientPort) {
+        this.clientPort = clientPort;
+    }
+
+    public PairPort getServerPort() {
+        return serverPort;
+    }
+
+    public void setServerPort(PairPort serverPort) {
+        this.serverPort = serverPort;
+    }
+
+    /**
+     * 传输描述符
+     * transport/profile/lower-transport
+     */
+    public enum Specifier {
+        UDP("RTP/AVP/UDP"), TCP("RTP/AVP/TCP");
 
         public final String description;
 
-        Type(String description) {
+        Specifier(String description) {
             this.description = description;
+        }
+    }
+
+    public enum Mode {
+        PLAY, RECORD
+    }
+
+    /**
+     * 广播类型
+     */
+    public enum BroadcastType {
+        unicast, multicast
+    }
+
+    /**
+     * 端口组
+     */
+    public static class PairPort {
+        public int first;
+        public int second;
+
+        public PairPort(int first, int second) {
+            this.first = first;
+            this.second = second;
+        }
+    }
+
+    public static class Builder {
+        private Specifier specifier = UDP;
+
+        private BroadcastType broadcastType = BroadcastType.unicast;
+
+        private String destination;
+
+        private String source;
+
+        private Mode mode = Mode.PLAY;
+
+        private PairPort clientPort;
+
+        private PairPort serverPort;
+
+        public Builder specifier(Specifier specifier) {
+            this.specifier = specifier;
+            return this;
+        }
+
+        public TransportHeader build() {
+            return new TransportHeader("this");
         }
     }
 }

@@ -9,7 +9,8 @@ import io.chengguo.streaming.rtsp.header.Header;
 /**
  * Created by fingerart on 2018-07-17.
  */
-public class Request {
+public class Request implements IMessage {
+
     private Line line;
     private List<Header> headers = new ArrayList<>();
 
@@ -40,8 +41,13 @@ public class Request {
         for (Header header : headers) {
             buffer.append(header).append("\r\n");
         }
-        buffer.append("\r\n");
+        buffer.append("\r\n").append("\r\n");
         return buffer.toString();
+    }
+
+    @Override
+    public byte[] toRaw() {
+        return toString().getBytes();
     }
 
     /**
