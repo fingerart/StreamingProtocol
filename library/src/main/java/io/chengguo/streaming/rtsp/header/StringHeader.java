@@ -9,6 +9,9 @@ import io.chengguo.streaming.utils.Utils;
  * Created by fingerart on 2018-07-15.
  */
 public class StringHeader extends Header<String> {
+    public StringHeader() {
+    }
+
     public StringHeader(String name, String value) {
         super(name, value);
     }

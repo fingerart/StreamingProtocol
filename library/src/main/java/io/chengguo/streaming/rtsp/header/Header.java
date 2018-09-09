@@ -16,6 +16,9 @@ public abstract class Header<V> {
     private String name;
     private V value;
 
+    public Header() {
+    }
+
     public Header(String name, V value) {
         setName(name);
         setRawValue(value);
