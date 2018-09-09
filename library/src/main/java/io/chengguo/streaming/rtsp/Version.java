@@ -4,8 +4,8 @@ package io.chengguo.streaming.rtsp;
  * Created by fingerart on 2018-07-17.
  */
 public class Version {
-    private String protocol;
-    private String version;
+    private String protocol = "RTSP";
+    private String version = "1.0";
 
     public Version(String version) {
         this.version = version;

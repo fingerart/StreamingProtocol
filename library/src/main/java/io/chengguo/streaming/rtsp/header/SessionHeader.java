@@ -14,5 +14,4 @@ public class SessionHeader extends StringHeader {
         super(nameOrRawHeader);
     }
 
-
 }

@@ -71,7 +71,7 @@ public class SupportMethodHeader extends StringHeader {
      * @return
      */
     private static String parseMethods(Method[] methods) {
-        StringBuffer result = new StringBuffer();
+        StringBuilder result = new StringBuilder();
         if (methods != null) {
             final char separator = ',';
             for (Method method : methods) {

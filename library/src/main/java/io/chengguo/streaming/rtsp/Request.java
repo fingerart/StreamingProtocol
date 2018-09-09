@@ -5,6 +5,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 import io.chengguo.streaming.rtsp.header.Header;
+import io.chengguo.streaming.rtsp.header.IntegerHeader;
+import io.chengguo.streaming.rtsp.header.StringHeader;
 
 /**
  * Created by fingerart on 2018-07-17.
@@ -13,6 +15,14 @@ public class Request implements IMessage {
 
     private Line line;
     private List<Header> headers = new ArrayList<>();
+
+    public Request() {
+    }
+
+    public Request(Builder builder) {
+        line = new Line(builder.method, builder.uri);
+        headers.addAll(builder.headers);
+    }
 
     public Line getLine() {
         return line;
@@ -36,7 +46,7 @@ public class Request implements IMessage {
 
     @Override
     public String toString() {
-        StringBuffer buffer = new StringBuffer(line.toString());
+        StringBuilder buffer = new StringBuilder(line.toString());
         buffer.append("\r\n");
         for (Header header : headers) {
             buffer.append(header).append("\r\n");
@@ -57,6 +67,17 @@ public class Request implements IMessage {
         private Method method;
         private URI uri;
         private Version version;
+
+        public Line(Method method, URI uri) {
+            this.method = method;
+            this.uri = uri;
+        }
+
+        public Line(Method method, URI uri, Version version) {
+            this.method = method;
+            this.uri = uri;
+            this.version = version;
+        }
 
         public Method getMethod() {
             return method;
@@ -85,6 +106,42 @@ public class Request implements IMessage {
         @Override
         public String toString() {
             return method + " " + uri + " " + version;
+        }
+    }
+
+    public static class Builder {
+
+        private Method method;
+        private URI uri;
+        private List<Header> headers = new ArrayList<>();
+
+        public Builder method(Method method) {
+            this.method = method;
+            return this;
+        }
+
+        public Builder uri(URI uri) {
+            this.uri = uri;
+            return this;
+        }
+
+        public Builder addHeader(String key, String value) {
+            headers.add(new StringHeader(key, value));
+            return this;
+        }
+
+        public Builder addHeader(String key, Integer value) {
+            headers.add(new IntegerHeader(key, value));
+            return this;
+        }
+
+        public Builder addHeader(Header header) {
+            headers.add(header);
+            return this;
+        }
+
+        public Request build() {
+            return new Request(this);
         }
     }
 }

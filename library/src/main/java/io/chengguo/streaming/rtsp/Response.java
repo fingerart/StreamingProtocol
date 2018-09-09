@@ -34,8 +34,8 @@ public class Response implements IMessage {
 
     @Override
     public String toString() {
-        StringBuffer buffer = new StringBuffer(line.toString());
-        buffer.append("\r\n");
+        StringBuilder buffer = new StringBuilder();
+        buffer.append(line.toString()).append("\r\n");
         for (Header header : headers) {
             buffer.append(header).append("\r\n");
         }
