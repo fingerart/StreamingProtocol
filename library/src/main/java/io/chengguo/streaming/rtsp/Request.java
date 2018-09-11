@@ -20,7 +20,7 @@ public class Request implements IMessage {
     }
 
     public Request(Builder builder) {
-        line = new Line(builder.method, builder.uri);
+        line = new Line(builder.method, builder.uri, builder.version);
         headers.addAll(builder.headers);
     }
 
@@ -114,6 +114,7 @@ public class Request implements IMessage {
         private Method method;
         private URI uri;
         private List<Header> headers = new ArrayList<>();
+        private Version version = new Version();
 
         public Builder method(Method method) {
             this.method = method;
@@ -122,6 +123,11 @@ public class Request implements IMessage {
 
         public Builder uri(URI uri) {
             this.uri = uri;
+            return this;
+        }
+
+        public Builder version(String version) {
+            this.version.setVersion(version);
             return this;
         }
 

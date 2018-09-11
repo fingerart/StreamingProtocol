@@ -30,11 +30,12 @@ public class TCPTransport implements ITransport {
         this.timeout = timeout;
         address = new InetSocketAddress(hostname, port);
         socket = new Socket();
+        transportListener = new SafeTransportListener();
     }
 
     @Override
     public void setTransportListener(ITransportListener listener) {
-        transportListener = new SafeTransportListener(listener);
+        transportListener.setBehaviour(listener);
     }
 
     @Override
@@ -46,6 +47,9 @@ public class TCPTransport implements ITransport {
                     socket.connect(address, timeout);
                     inputStream = socket.getInputStream();
                     outputStream = socket.getOutputStream();
+                    if (mResolver != null) {
+                        mResolver.target(inputStream);
+                    }
                     transportListener.onConnected();
                 } catch (IOException e) {
                     e.printStackTrace();
@@ -53,6 +57,11 @@ public class TCPTransport implements ITransport {
                 }
             }
         });
+    }
+
+    @Override
+    public boolean isConnected() {
+        return socket!=null && socket.isConnected();
     }
 
     @Override
@@ -82,7 +91,6 @@ public class TCPTransport implements ITransport {
     @Override
     public void setResolver(IResolver resolver) {
         mResolver = resolver;
-        mResolver.target(inputStream);
     }
 
     @Override

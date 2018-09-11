@@ -4,19 +4,18 @@ package io.chengguo.streaming.rtsp;
  * Created by fingerart on 2018-07-17.
  */
 public class Version {
-    private String protocol = "RTSP";
+    public static final String PROTOCOL = "RTSP";
     private String version = "1.0";
+
+    public Version() {
+    }
 
     public Version(String version) {
         this.version = version;
     }
 
     public String getProtocol() {
-        return protocol;
-    }
-
-    public void setProtocol(String protocol) {
-        this.protocol = protocol;
+        return PROTOCOL;
     }
 
     public String getVersion() {
@@ -29,6 +28,6 @@ public class Version {
 
     @Override
     public String toString() {
-        return protocol + "/" + version;
+        return PROTOCOL + "/" + version;
     }
 }

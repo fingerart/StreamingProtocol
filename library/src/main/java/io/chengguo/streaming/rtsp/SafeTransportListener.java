@@ -7,10 +7,6 @@ public class SafeTransportListener implements ITransportListener {
 
     private ITransportListener behaviour;
 
-    public SafeTransportListener(ITransportListener listener) {
-        behaviour = listener;
-    }
-
     @Override
     public void onConnected() {
         if (behaviour != null) {
@@ -30,5 +26,9 @@ public class SafeTransportListener implements ITransportListener {
         if (behaviour != null) {
             behaviour.onDisconnected();
         }
+    }
+
+    public void setBehaviour(ITransportListener listener) {
+        behaviour = listener;
     }
 }

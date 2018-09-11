@@ -19,7 +19,7 @@ public class RTSPClient implements ITransportListener, IResolver.IResolverCallba
     private RTSPSession session;
 
     public RTSPClient() {
-        session = new RTSPSession("", 554, TransportMethod.TCP);
+        session = new RTSPSession("127.0.0.1", 554, TransportMethod.TCP);
         session.setTransportListener(this);
         session.setResolverCallback(this);
         session.connect();

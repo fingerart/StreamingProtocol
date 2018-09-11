@@ -18,6 +18,11 @@ public class UDPTransport implements ITransport {
     }
 
     @Override
+    public boolean isConnected() {
+        return false;
+    }
+
+    @Override
     public void disconnect() {
 
     }
