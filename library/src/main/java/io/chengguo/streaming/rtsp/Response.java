@@ -81,6 +81,24 @@ public class Response implements IMessage {
         public String toString() {
             return version + " " + statusCode + " " + statusMessage;
         }
+
+        public static Line parse(String sLine) {
+            assert sLine != null;
+
+            String[] ls = sLine.split(" ");
+            //version
+            String sVersion = ls[0];
+            String version = sVersion.substring(sVersion.indexOf("/"));
+            //status code
+            int code = Integer.valueOf(ls[1]);
+            //status message
+            String message = ls[2];
+            Line line = new Line();
+            line.setVersion(new Version(version));
+            line.setStatusCode(code);
+            line.setStatusMessage(message);
+            return line;
+        }
     }
 
     public static class Body {

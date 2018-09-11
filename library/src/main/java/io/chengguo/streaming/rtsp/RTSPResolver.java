@@ -38,8 +38,21 @@ class RTSPResolver implements IResolver<Response> {
                         if (response == null) {
                             response = new Response();
                         }
-                        resolverCallback.onResolve(response);
+                        if (line.length() == 0) {
+//                            System.out.println(response);
+                            if (resolverCallback != null) {
+                                resolverCallback.onResolve(response);
+                            }
+                            response = null;
+                            continue;
+                        }
                         System.out.println(line);
+                        //line
+                        if (line.startsWith(Version.PROTOCOL)) {
+                            Response.Line.parse(line);
+                        }
+                        //header
+                        //body
                     }
                 } catch (IOException e) {
                     e.printStackTrace();

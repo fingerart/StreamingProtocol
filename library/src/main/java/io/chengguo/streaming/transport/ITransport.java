@@ -12,6 +12,8 @@ public interface ITransport {
 
     void connect();
 
+    boolean isConnected();
+
     void disconnect();
 
     void send(byte[] data);

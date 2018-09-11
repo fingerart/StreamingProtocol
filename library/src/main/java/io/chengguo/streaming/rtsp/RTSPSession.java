@@ -22,11 +22,11 @@ public class RTSPSession {
         this.target = target;
         this.port = port;
         this.method = method;
+        transport = method.createTransport(target, port, 3000);
+        transport.setResolver(new RTSPResolver());
     }
 
     public void connect() {
-        transport = method.createTransport(target, port, 3000);
-        transport.setResolver(new RTSPResolver());
         transport.connect();
     }
 
@@ -41,6 +41,15 @@ public class RTSPSession {
     public void send(Request request) {
         request.addHeader(new CSeqHeader(sequence.incrementAndGet()));
         request.addHeader(new UserAgentHeader("ChengGuo"));
+        StringBuilder sb = new StringBuilder();
+        sb.append(">----------------------- ").append(request.getLine().getMethod()).append("\r\n")
+                .append(request.toString())
+                .append(">----------------------- ").append(request.getLine().getMethod());
+        System.out.println(sb);
         transport.send(request.toRaw());
+    }
+
+    public boolean isConnected() {
+        return transport.isConnected();
     }
 }
