@@ -47,6 +47,7 @@ public class TransportHeader extends StringHeader {
     }
 
     private void rebuildRawValue() {
+        // TODO: 2018/9/13 分离不必要的属性
         StringBuilder sb = new StringBuilder();
                 sb.append(specifier.description).append(";")
                         .append(broadcastType.name()).append(";")
