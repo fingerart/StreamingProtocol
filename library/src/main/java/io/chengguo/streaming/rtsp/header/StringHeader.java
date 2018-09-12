@@ -20,11 +20,6 @@ public class StringHeader extends Header<String> {
         super(nameOrRawHeader);
     }
 
-    @Override
-    public void setRawValue(String value) {
-        super.setRawValue(trySplitKV(value));
-    }
-
     /**
      * 尝试拆分Key: Value
      *
@@ -41,6 +36,6 @@ public class StringHeader extends Header<String> {
 
     @Override
     protected String parseValue(String value) {
-        return Utils.trimSafely(value);
+        return value;
     }
 }

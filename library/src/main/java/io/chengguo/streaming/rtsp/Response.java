@@ -3,6 +3,7 @@ package io.chengguo.streaming.rtsp;
 import java.util.ArrayList;
 import java.util.List;
 
+import io.chengguo.streaming.rtsp.header.ContentLengthHeader;
 import io.chengguo.streaming.rtsp.header.Header;
 
 /**
@@ -11,6 +12,8 @@ import io.chengguo.streaming.rtsp.header.Header;
 public class Response implements IMessage {
     private Line line;
     private List<Header> headers = new ArrayList<>();
+    private int contentLength;
+    private Body body = new Body();
 
     public Line getLine() {
         return line;
@@ -29,7 +32,22 @@ public class Response implements IMessage {
     }
 
     public void addHeader(Header header) {
+        if (header instanceof ContentLengthHeader) {
+            contentLength = ((ContentLengthHeader) header).getRawValue();
+        }
         headers.add(header);
+    }
+
+    public int getContentLength() {
+        return contentLength;
+    }
+
+    public void appendBody(String sLine) {
+        body.append(sLine);
+    }
+
+    public Body getBody() {
+        return body;
     }
 
     @Override
@@ -39,6 +57,7 @@ public class Response implements IMessage {
         for (Header header : headers) {
             buffer.append(header).append("\r\n");
         }
+        buffer.append("\r\n").append(body.toString());
         buffer.append("\r\n").append("\r\n");
         return buffer.toString();
     }
@@ -88,7 +107,7 @@ public class Response implements IMessage {
             String[] ls = sLine.split(" ");
             //version
             String sVersion = ls[0];
-            String version = sVersion.substring(sVersion.indexOf("/"));
+            String version = sVersion.substring(sVersion.indexOf("/") + 1);
             //status code
             int code = Integer.valueOf(ls[1]);
             //status message
@@ -102,6 +121,19 @@ public class Response implements IMessage {
     }
 
     public static class Body {
+        private StringBuilder content = new StringBuilder();
 
+        public void append(String sLine) {
+            content.append(sLine).append("\r\n");
+        }
+
+        public int getLength() {
+            return toString().getBytes().length;
+        }
+
+        @Override
+        public String toString() {
+            return content.toString();
+        }
     }
 }
