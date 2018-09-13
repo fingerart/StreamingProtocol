@@ -1,6 +1,5 @@
 package io.chengguo.streaming.rtsp.header;
 
-import java.math.BigDecimal;
 import java.util.Locale;
 
 import io.chengguo.streaming.utils.L;
@@ -28,6 +27,10 @@ public class RangeHeader extends StringHeader {
         super(DEFAULT_NAME, format(begin, end));
         this.begin = begin;
         this.end = end;
+    }
+
+    public RangeHeader(double begin) {
+        this(begin, 0);
     }
 
     public double getBegin() {

@@ -15,6 +15,7 @@ public class RTSPSession {
     private String target;
     private int port;
     private TransportMethod method;
+    private String session;
     private AtomicInteger sequence = new AtomicInteger();
     private ITransport transport;
 
@@ -34,6 +35,7 @@ public class RTSPSession {
         transport.setTransportListener(transportListener);
     }
 
+    // TODO: 2018/9/13 RTSP & RTP
     public void setResolverCallback(IResolver.IResolverCallback<Response> resolverCallback) {
         transport.getResolver().setResolverCallback(resolverCallback);
     }

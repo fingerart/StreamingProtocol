@@ -61,7 +61,7 @@ public class TCPTransport implements ITransport {
 
     @Override
     public boolean isConnected() {
-        return socket!=null && socket.isConnected();
+        return socket != null && socket.isConnected();
     }
 
     @Override
@@ -90,7 +90,14 @@ public class TCPTransport implements ITransport {
 
     @Override
     public void setResolver(IResolver resolver) {
+        //如果存在则释放之前的解析器
+        if (mResolver != null) {
+            mResolver.release();
+        }
         mResolver = resolver;
+        if (mResolver != null && isConnected()) {
+            mResolver.target(inputStream);
+        }
     }
 
     @Override

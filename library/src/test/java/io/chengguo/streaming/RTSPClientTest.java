@@ -10,6 +10,7 @@ import java.net.URI;
 import io.chengguo.streaming.rtsp.Method;
 import io.chengguo.streaming.rtsp.RTSPSession;
 import io.chengguo.streaming.rtsp.Request;
+import io.chengguo.streaming.rtsp.header.RangeHeader;
 import io.chengguo.streaming.rtsp.header.TransportHeader;
 import io.chengguo.streaming.transport.TransportMethod;
 
@@ -30,6 +31,7 @@ public class RTSPClientTest {
         options();
         describe();
         setup();
+        play();
     }
 
     private void connect() throws InterruptedException {
@@ -70,8 +72,19 @@ public class RTSPClientTest {
         session.send(request);
     }
 
+    private void play() {
+        Request request = new Request.Builder()
+                .method(Method.PLAY)
+                .uri(URI.create("rtsp://127.0.0.1/NeverPlay.mp3"))
+                .addHeader(new RangeHeader(0))
+                .build();
+//        session.send(request);
+    }
+
     @After
     public void tearDown() throws Exception {
         Thread.sleep(1000);
     }
+
+
 }
