@@ -6,11 +6,15 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
 import io.chengguo.streaming.rtsp.header.ContentLengthHeader;
+import io.chengguo.streaming.rtsp.header.SessionHeader;
 import io.chengguo.streaming.rtsp.header.StringHeader;
+import io.chengguo.streaming.rtsp.header.TransportHeader;
 
 /**
+ * RTSP解析器
  * Created by fingerart on 2018-09-09.
  */
 class RTSPResolver implements IResolver<Response> {
@@ -18,9 +22,11 @@ class RTSPResolver implements IResolver<Response> {
     private static final ExecutorService EXECUTOR = Executors.newSingleThreadExecutor();
     private IResolverCallback<Response> resolverCallback;
     private BufferedReader reader;
+    private Future<?> future;
 
     @Override
     public void target(InputStream inputStream) {
+        //转换InputStream的类型
         reader = new BufferedReader(new InputStreamReader(inputStream));
         reading();
     }
@@ -31,7 +37,7 @@ class RTSPResolver implements IResolver<Response> {
     }
 
     private void reading() {
-        EXECUTOR.execute(new Runnable() {
+        future = EXECUTOR.submit(new Runnable() {
             @Override
             public void run() {
                 try {
@@ -58,6 +64,19 @@ class RTSPResolver implements IResolver<Response> {
         });
     }
 
+    @Override
+    public void release() {
+        if (future != null) {
+            future.cancel(true);
+            reader = null;
+            future = null;
+            resolverCallback = null;
+        }
+    }
+
+    /**
+     * 解析单行字符串
+     */
     public static class ResolverByLine {
 
         private static final int STEP_LINE = 1 << 0;
@@ -86,10 +105,8 @@ class RTSPResolver implements IResolver<Response> {
                     } else {
                         currentStep = STEP_COMPLETED;
                     }
-                } else if (sLine.startsWith(ContentLengthHeader.DEFAULT_NAME)) {
-                    response.addHeader(new ContentLengthHeader(sLine));
                 } else {
-                    response.addHeader(new StringHeader(sLine));
+                    resolveHeader(sLine);
                 }
             } else if ((currentStep & STEP_BODY) != 0) {
                 response.appendBody(sLine);
@@ -99,6 +116,20 @@ class RTSPResolver implements IResolver<Response> {
                 if (bodyLength >= contentLength) {
                     currentStep = STEP_COMPLETED;
                 }
+            } else {
+                System.out.println("未知内容：" + sLine);
+            }
+        }
+
+        private void resolveHeader(String sLine) {
+            if (sLine.startsWith(ContentLengthHeader.DEFAULT_NAME)) {
+                response.addHeader(new ContentLengthHeader(sLine));
+            } else if (sLine.startsWith(TransportHeader.DEFAULT_NAME)) {
+                response.addHeader(new TransportHeader(sLine));
+            } else if (sLine.startsWith(SessionHeader.DEFAULT_NAME)) {
+                response.addHeader(new SessionHeader(sLine));
+            } else {
+                response.addHeader(new StringHeader(sLine));
             }
         }
 

@@ -2,6 +2,9 @@ package io.chengguo.streaming.rtsp.header;
 
 import android.support.annotation.NonNull;
 
+import io.chengguo.streaming.utils.Utils;
+
+import static io.chengguo.streaming.rtsp.header.TransportHeader.Specifier.TCP;
 import static io.chengguo.streaming.rtsp.header.TransportHeader.Specifier.UDP;
 
 /**
@@ -30,10 +33,6 @@ public class TransportHeader extends StringHeader {
         deformat(getRawValue());
     }
 
-    private void deformat(String rawValue) {
-
-    }
-
     public TransportHeader(Builder builder) {
         setName(DEFAULT_NAME);
         specifier = builder.specifier;
@@ -46,16 +45,49 @@ public class TransportHeader extends StringHeader {
         rebuildRawValue();
     }
 
+    private void deformat(String rawValue) {
+        String[] items = rawValue.split(";");
+        for (String item : items) {
+            if (item.startsWith(Specifier.UDP.description)) {
+                setSpecifier(UDP);
+            } else if (item.startsWith(Specifier.UDP.description)) {
+                setSpecifier(TCP);
+            } else if (item.startsWith(BroadcastType.unicast.name())) {
+                setBroadcastType(BroadcastType.unicast);
+            } else if (item.startsWith(BroadcastType.multicast.name())) {
+                setBroadcastType(BroadcastType.multicast);
+            } else if (item.startsWith("destination")) {
+                destination = item.substring(item.indexOf("=") + 1);
+            } else if (item.startsWith("source")) {
+                source = item.substring(item.indexOf("=") + 1);
+            } else if (item.startsWith("client_port")) {
+                clientPort = new PairPort(item.substring(item.indexOf("=") + 1));
+            } else if (item.startsWith("server_port")) {
+                serverPort = new PairPort(item.substring(item.indexOf("=") + 1));
+            } else if (item.startsWith("mode")) {
+                mode = Mode.valueOf(item.substring(item.indexOf("=") + 1));
+            }
+        }
+    }
+
     private void rebuildRawValue() {
-        // TODO: 2018/9/13 分离不必要的属性
         StringBuilder sb = new StringBuilder();
-                sb.append(specifier.description).append(";")
-                        .append(broadcastType.name()).append(";")
-                        .append("destination=").append(destination).append(";")
-                        .append("source=").append(source).append(";")
-                        .append("client_port=").append(clientPort.toString()).append(";")
-                        .append("server_port=").append(serverPort.toString()).append(";")
-                        .append("mode=").append(mode.name()).append(";");
+        sb
+                .append(specifier.description).append(";")
+                .append(broadcastType.name()).append(";")
+                .append("mode=").append(mode.name()).append(";");
+        if (!Utils.isEmpty(destination)) {
+            sb.append("destination=").append(destination).append(";");
+        }
+        if (!Utils.isEmpty(source)) {
+            sb.append("source=").append(source).append(";");
+        }
+        if (clientPort != null) {
+            sb.append("client_port=").append(clientPort.toString()).append(";");
+        }
+        if (serverPort != null) {
+            sb.append("server_port=").append(serverPort.toString()).append(";");
+        }
         setRawValue(sb.toString());
     }
 
@@ -146,6 +178,12 @@ public class TransportHeader extends StringHeader {
     public static class PairPort {
         public int begin;
         public int end;
+
+        public PairPort(String rawPairPort) {
+            String[] pair = rawPairPort.split("-");
+            begin = Integer.valueOf(pair[0]);
+            end = Integer.valueOf(pair[1]);
+        }
 
         public PairPort(int begin, int end) {
             this.begin = begin;

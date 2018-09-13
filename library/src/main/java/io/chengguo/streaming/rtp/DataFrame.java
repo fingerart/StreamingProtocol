@@ -1,4 +1,4 @@
-package io.chengguo.streaming;
+package io.chengguo.streaming.rtp;
 
 /**
  * Created by fingerart on 2018/6/20.
