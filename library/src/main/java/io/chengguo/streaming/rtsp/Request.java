@@ -1,8 +1,7 @@
 package io.chengguo.streaming.rtsp;
 
 import java.net.URI;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashMap;
 
 import io.chengguo.streaming.rtsp.header.Header;
 import io.chengguo.streaming.rtsp.header.IntegerHeader;
@@ -14,14 +13,14 @@ import io.chengguo.streaming.rtsp.header.StringHeader;
 public class Request implements IMessage {
 
     private Line line;
-    private List<Header> headers = new ArrayList<>();
+    private HashMap<String, Header> headers = new HashMap<>();
 
     public Request() {
     }
 
     public Request(Builder builder) {
         line = new Line(builder.method, builder.uri, builder.version);
-        headers.addAll(builder.headers);
+        headers.putAll(builder.headers);
     }
 
     public Line getLine() {
@@ -32,23 +31,28 @@ public class Request implements IMessage {
         this.line = line;
     }
 
-    public List<Header> getHeaders() {
+    public HashMap<String, Header> getHeaders() {
         return headers;
     }
 
-    public void setHeaders(List<Header> headers) {
+    public void setHeaders(HashMap<String, Header> headers) {
         this.headers = headers;
     }
 
     public void addHeader(Header header) {
-        this.headers.add(header);
+        this.headers.put(header.getName(), header);
+    }
+
+    public <T extends Header> T getHeader(String key) {
+        Header header = headers.get(key);
+        return header == null ? null : (T) header;
     }
 
     @Override
     public String toString() {
         StringBuilder buffer = new StringBuilder(line.toString());
         buffer.append("\r\n");
-        for (Header header : headers) {
+        for (Header header : headers.values()) {
             buffer.append(header).append("\r\n");
         }
         buffer.append("\r\n").append("\r\n");
@@ -113,7 +117,7 @@ public class Request implements IMessage {
 
         private Method method;
         private URI uri;
-        private List<Header> headers = new ArrayList<>();
+        private HashMap<String, Header> headers = new HashMap<>();
         private Version version = new Version();
 
         public Builder method(Method method) {
@@ -132,17 +136,17 @@ public class Request implements IMessage {
         }
 
         public Builder addHeader(String key, String value) {
-            headers.add(new StringHeader(key, value));
+            headers.put(key, new StringHeader(key, value));
             return this;
         }
 
         public Builder addHeader(String key, Integer value) {
-            headers.add(new IntegerHeader(key, value));
+            headers.put(key, new IntegerHeader(key, value));
             return this;
         }
 
         public Builder addHeader(Header header) {
-            headers.add(header);
+            headers.put(header.getName(), header);
             return this;
         }
 
