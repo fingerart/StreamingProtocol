@@ -1,2 +1,2 @@
-# streaming-protocol
+# StreamingProtocol
 Java implementation of streaming protocol
