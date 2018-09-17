@@ -1,5 +1,6 @@
 package io.chengguo.streaming.transport;
 
+import io.chengguo.streaming.rtsp.IMessage;
 import io.chengguo.streaming.rtsp.IResolver;
 import io.chengguo.streaming.rtsp.ITransportListener;
 
@@ -28,7 +29,7 @@ public class UDPTransport implements ITransport {
     }
 
     @Override
-    public void send(byte[] data) {
+    public void send(IMessage data) {
 
     }
 

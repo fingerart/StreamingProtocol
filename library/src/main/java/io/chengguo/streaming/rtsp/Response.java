@@ -1,7 +1,7 @@
 package io.chengguo.streaming.rtsp;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Collection;
+import java.util.HashMap;
 
 import io.chengguo.streaming.rtsp.header.ContentLengthHeader;
 import io.chengguo.streaming.rtsp.header.Header;
@@ -10,10 +10,20 @@ import io.chengguo.streaming.rtsp.header.Header;
  * Created by fingerart on 2018-07-17.
  */
 public class Response implements IMessage {
+    private Request request;
     private Line line;
-    private List<Header> headers = new ArrayList<>();
+    private HashMap<String, Header> headers = new HashMap<>();
+
     private int contentLength;
     private Body body = new Body();
+
+    public Request getRequest() {
+        return request;
+    }
+
+    public void setRequest(Request request) {
+        this.request = request;
+    }
 
     public Line getLine() {
         return line;
@@ -23,11 +33,11 @@ public class Response implements IMessage {
         this.line = line;
     }
 
-    public List<Header> getHeader() {
-        return headers;
+    public Collection<Header> getHeader() {
+        return headers.values();
     }
 
-    public void setHeader(List<Header> header) {
+    public void setHeader(HashMap<String, Header> header) {
         this.headers = header;
     }
 
@@ -35,7 +45,12 @@ public class Response implements IMessage {
         if (header instanceof ContentLengthHeader) {
             contentLength = ((ContentLengthHeader) header).getRawValue();
         }
-        headers.add(header);
+        headers.put(header.getName(), header);
+    }
+
+    public <T extends Header> T getHeader(String key) {
+        Header header = headers.get(key);
+        return header == null ? null : (T) header;
     }
 
     public int getContentLength() {
@@ -54,7 +69,7 @@ public class Response implements IMessage {
     public String toString() {
         StringBuilder buffer = new StringBuilder();
         buffer.append(line.toString()).append("\r\n");
-        for (Header header : headers) {
+        for (Header header : getHeader()) {
             buffer.append(header).append("\r\n");
         }
         buffer.append("\r\n").append(body.toString());

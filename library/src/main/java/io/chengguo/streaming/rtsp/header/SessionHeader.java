@@ -5,12 +5,12 @@ import android.support.annotation.NonNull;
 import io.chengguo.streaming.utils.Utils;
 
 /**
+ * Session: E7E25DEC;timeout=65
  * Created by fingerart on 2018-07-15.
  */
 public class SessionHeader extends StringHeader {
 
     public static final String DEFAULT_NAME = "Session";
-    //Session: E7E25DEC;timeout=65
 
     private String session;
     private int timeout;
@@ -30,10 +30,10 @@ public class SessionHeader extends StringHeader {
     private String buildSession() {
         StringBuilder sb = new StringBuilder();
         if (!Utils.isEmpty(session)) {
-            sb.append(session).append(";");
+            sb.append(session);
         }
         if (timeout != 0) {
-            sb.append("timeout=").append(timeout);
+            sb.append(";").append("timeout=").append(timeout);
         }
         return sb.toString();
     }

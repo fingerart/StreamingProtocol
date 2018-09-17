@@ -8,6 +8,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
+import io.chengguo.streaming.rtsp.header.CSeqHeader;
 import io.chengguo.streaming.rtsp.header.ContentLengthHeader;
 import io.chengguo.streaming.rtsp.header.SessionHeader;
 import io.chengguo.streaming.rtsp.header.StringHeader;
@@ -50,8 +51,9 @@ class RTSPResolver implements IResolver<Response> {
                         }
                         resolver.resolve(sLine);
                         if (resolver.isCompleted()) {
-                            System.out.println("resolved:\r\n" + resolver.response);
+//                            System.out.println("resolved:\r\n" + resolver.response);
                             if (resolverCallback != null) {
+
                                 resolverCallback.onResolve(resolver.response);
                             }
                             resolver = null;
@@ -98,8 +100,8 @@ class RTSPResolver implements IResolver<Response> {
                 response.setLine(line);
                 currentStep = STEP_HEADER;
             } else if ((currentStep & STEP_HEADER) != 0) {
-                int contentLength = response.getContentLength();
                 if (sLine.length() == 0) {
+                    int contentLength = response.getContentLength();
                     if (contentLength > 0) {
                         currentStep = STEP_BODY;
                     } else {
@@ -128,6 +130,8 @@ class RTSPResolver implements IResolver<Response> {
                 response.addHeader(new TransportHeader(sLine));
             } else if (sLine.startsWith(SessionHeader.DEFAULT_NAME)) {
                 response.addHeader(new SessionHeader(sLine));
+            } else if (sLine.startsWith(CSeqHeader.DEFAULT_NAME)) {
+                response.addHeader(new CSeqHeader(sLine));
             } else {
                 response.addHeader(new StringHeader(sLine));
             }

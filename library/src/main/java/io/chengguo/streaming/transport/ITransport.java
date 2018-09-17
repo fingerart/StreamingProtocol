@@ -1,5 +1,6 @@
 package io.chengguo.streaming.transport;
 
+import io.chengguo.streaming.rtsp.IMessage;
 import io.chengguo.streaming.rtsp.IResolver;
 import io.chengguo.streaming.rtsp.ITransportListener;
 
@@ -16,7 +17,7 @@ public interface ITransport {
 
     void disconnect();
 
-    void send(byte[] data);
+    void send(IMessage message);
 
     void setResolver(IResolver resolver);
 

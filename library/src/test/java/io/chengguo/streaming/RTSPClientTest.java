@@ -7,9 +7,11 @@ import org.junit.Test;
 
 import java.net.URI;
 
+import io.chengguo.streaming.rtsp.IResolver;
 import io.chengguo.streaming.rtsp.Method;
 import io.chengguo.streaming.rtsp.RTSPSession;
 import io.chengguo.streaming.rtsp.Request;
+import io.chengguo.streaming.rtsp.Response;
 import io.chengguo.streaming.rtsp.header.RangeHeader;
 import io.chengguo.streaming.rtsp.header.TransportHeader;
 import io.chengguo.streaming.transport.TransportMethod;
@@ -23,21 +25,38 @@ public class RTSPClientTest {
     @Before
     public void setUp() throws Exception {
         session = new RTSPSession("127.0.0.1", 554, TransportMethod.TCP);
+        session.setRTSPResolverCallback(new IResolver.IResolverCallback<Response>() {
+            @Override
+            public void onResolve(Response response) {
+                try {
+                    Request request = response.getRequest();
+                    Method method = request.getLine().getMethod();
+                    System.out.println(response);
+                    switch (method) {
+                        case OPTIONS:
+                            describe();
+                            break;
+                        case DESCRIBE:
+                            setup();
+                            break;
+                        case SETUP:
+                            play();
+                            break;
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        });
     }
 
     @Test
     public void testConnect() throws Exception {
-        connect();
-        options();
-        describe();
-        setup();
-        play();
-    }
-
-    private void connect() throws InterruptedException {
         session.connect();
         Thread.sleep(1000);
         Assert.assertTrue("Not connect", session.isConnected());
+
+        options();
     }
 
     private void options() throws Exception {
@@ -78,13 +97,12 @@ public class RTSPClientTest {
                 .uri(URI.create("rtsp://127.0.0.1/NeverPlay.mp3"))
                 .addHeader(new RangeHeader(0))
                 .build();
-//        session.send(request);
+        session.send(request);
     }
 
     @After
     public void tearDown() throws Exception {
-        Thread.sleep(1000);
+        Thread.sleep(100000);
     }
-
 
 }

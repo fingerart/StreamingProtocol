@@ -8,6 +8,7 @@ import java.net.Socket;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+import io.chengguo.streaming.rtsp.IMessage;
 import io.chengguo.streaming.rtsp.IResolver;
 import io.chengguo.streaming.rtsp.ITransportListener;
 import io.chengguo.streaming.rtsp.SafeTransportListener;
@@ -25,6 +26,7 @@ public class TCPTransport implements ITransport {
     private OutputStream outputStream;
     private SafeTransportListener transportListener;
     private IResolver mResolver;
+    private IMessage mMessage;
 
     public TCPTransport(String hostname, int port, int timeout) {
         this.timeout = timeout;
@@ -65,12 +67,12 @@ public class TCPTransport implements ITransport {
     }
 
     @Override
-    public void send(final byte[] data) {
+    public void send(final IMessage message) {
         EXECUTOR.execute(new Runnable() {
             @Override
             public void run() {
                 try {
-                    outputStream.write(data);
+                    outputStream.write(message.toRaw());
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
