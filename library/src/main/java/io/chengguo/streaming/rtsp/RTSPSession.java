@@ -34,7 +34,7 @@ public class RTSPSession {
     }
 
     private void setRTSPAndCallback() {
-        transport.setResolver(new RTSPResolver());
+        transport.setRtspResolver(new RTSPResolver());
         transport.getResolver().setResolverCallback(new IResolver.IResolverCallback<Response>() {
             @Override
             public void onResolve(Response response) {
@@ -58,7 +58,6 @@ public class RTSPSession {
     }
 
     private void setRTPAndCallback() {
-        transport.setResolver(new RawResolver());
     }
 
     public void connect() {

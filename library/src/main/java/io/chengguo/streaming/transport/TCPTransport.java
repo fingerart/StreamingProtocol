@@ -1,5 +1,6 @@
 package io.chengguo.streaming.transport;
 
+import java.io.DataInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -11,6 +12,7 @@ import java.util.concurrent.Executors;
 import io.chengguo.streaming.rtsp.IMessage;
 import io.chengguo.streaming.rtsp.IResolver;
 import io.chengguo.streaming.rtsp.ITransportListener;
+import io.chengguo.streaming.rtsp.Response;
 import io.chengguo.streaming.rtsp.SafeTransportListener;
 
 /**
@@ -25,7 +27,7 @@ public class TCPTransport implements ITransport {
     private InputStream inputStream;
     private OutputStream outputStream;
     private SafeTransportListener transportListener;
-    private IResolver mResolver;
+    private IResolver<Integer, Response> mRtspResolver;
     private IMessage mMessage;
 
     public TCPTransport(String hostname, int port, int timeout) {
@@ -49,16 +51,31 @@ public class TCPTransport implements ITransport {
                     socket.connect(address, timeout);
                     inputStream = socket.getInputStream();
                     outputStream = socket.getOutputStream();
-                    if (mResolver != null) {
-                        mResolver.target(inputStream);
-                    }
                     transportListener.onConnected();
+                    DataInputStream in = new DataInputStream(inputStream);
+                    registerResolver();
+                    int firstByte;
+                    while ((firstByte = in.readUnsignedByte()) != -1) {
+                        if (firstByte == 36) {//RTP or RTCP
+
+                        } else {//RTSP
+                            if (mRtspResolver != null) {
+                                mRtspResolver.resolve(firstByte);
+                            }
+                        }
+                    }
                 } catch (IOException e) {
                     e.printStackTrace();
                     transportListener.onConnectFail(e);
                 }
             }
         });
+    }
+
+    private void registerResolver() {
+        if (mRtspResolver != null) {
+            mRtspResolver.regist(inputStream);
+        }
     }
 
     @Override
@@ -84,26 +101,24 @@ public class TCPTransport implements ITransport {
     public void disconnect() {
         try {
             socket.close();
-            transportListener.onDisconnected();
         } catch (IOException e) {
             e.printStackTrace();
+        } finally {
+            transportListener.onDisconnected();
         }
     }
 
     @Override
-    public void setResolver(IResolver resolver) {
+    public void setRtspResolver(IResolver resolver) {
         //如果存在则释放之前的解析器
-        if (mResolver != null) {
-            mResolver.release();
+        if (mRtspResolver != null) {
+            mRtspResolver.release();
         }
-        mResolver = resolver;
-        if (mResolver != null && isConnected()) {
-            mResolver.target(inputStream);
-        }
+        mRtspResolver = resolver;
     }
 
     @Override
     public IResolver getResolver() {
-        return mResolver;
+        return mRtspResolver;
     }
 }
