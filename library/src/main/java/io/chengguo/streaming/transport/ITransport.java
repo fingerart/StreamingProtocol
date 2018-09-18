@@ -19,7 +19,7 @@ public interface ITransport {
 
     void send(IMessage message);
 
-    void setResolver(IResolver resolver);
+    void setRtspResolver(IResolver resolver);
 
     IResolver getResolver();
 }

@@ -34,7 +34,7 @@ public class UDPTransport implements ITransport {
     }
 
     @Override
-    public void setResolver(IResolver resolver) {
+    public void setRtspResolver(IResolver resolver) {
 
     }
 

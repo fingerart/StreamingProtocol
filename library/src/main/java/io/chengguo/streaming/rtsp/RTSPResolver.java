@@ -4,9 +4,6 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
 
 import io.chengguo.streaming.rtsp.header.CSeqHeader;
 import io.chengguo.streaming.rtsp.header.ContentLengthHeader;
@@ -18,18 +15,35 @@ import io.chengguo.streaming.rtsp.header.TransportHeader;
  * RTSP解析器
  * Created by fingerart on 2018-09-09.
  */
-class RTSPResolver implements IResolver<Response> {
+class RTSPResolver implements IResolver<Integer, Response> {
 
-    private static final ExecutorService EXECUTOR = Executors.newSingleThreadExecutor();
     private IResolverCallback<Response> resolverCallback;
     private BufferedReader reader;
-    private Future<?> future;
 
     @Override
-    public void target(InputStream inputStream) {
+    public void regist(InputStream inputStream) {
         //转换InputStream的类型
         reader = new BufferedReader(new InputStreamReader(inputStream));
-        reading();
+    }
+
+    @Override
+    public void resolve(Integer firstByte) throws IOException {
+        String sLine;
+        ResolverByLine lineResolver = new ResolverByLine();
+        while ((sLine = reader.readLine()) != null) {
+            //拼接上已被读取的第一个字节
+            if (firstByte != -1) {
+                sLine = Character.toString((char) firstByte.intValue()) + sLine;
+                firstByte = -1;
+            }
+            lineResolver.resolve(sLine);
+            if (lineResolver.isCompleted()) {
+                if (resolverCallback != null) {
+                    resolverCallback.onResolve(lineResolver.response);
+                }
+                break;
+            }
+        }
     }
 
     @Override
@@ -37,43 +51,9 @@ class RTSPResolver implements IResolver<Response> {
         this.resolverCallback = resolverCallback;
     }
 
-    private void reading() {
-        future = EXECUTOR.submit(new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    String sLine;
-                    ResolverByLine resolver = null;
-                    while ((sLine = reader.readLine()) != null) {
-//                        System.out.println("receive: [" + sLine + "]");
-                        if (resolver == null) {
-                            resolver = new ResolverByLine();
-                        }
-                        resolver.resolve(sLine);
-                        if (resolver.isCompleted()) {
-//                            System.out.println("resolved:\r\n" + resolver.response);
-                            if (resolverCallback != null) {
-
-                                resolverCallback.onResolve(resolver.response);
-                            }
-                            resolver = null;
-                        }
-                    }
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
-        });
-    }
-
     @Override
     public void release() {
-        if (future != null) {
-            future.cancel(true);
-            reader = null;
-            future = null;
-            resolverCallback = null;
-        }
+        reader = null;
     }
 
     /**
