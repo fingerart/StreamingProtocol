@@ -74,6 +74,7 @@ class RTSPResolver implements IResolver<Integer, Response> {
             response = new Response();
         }
 
+        // TODO: 2018/9/26 解析 SDP
         public void resolve(String sLine) {
             if ((currentStep & STEP_LINE) != 0 && sLine.startsWith(Version.PROTOCOL)) {
                 Response.Line line = Response.Line.parse(sLine);

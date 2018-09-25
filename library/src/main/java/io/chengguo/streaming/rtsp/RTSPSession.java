@@ -3,6 +3,7 @@ package io.chengguo.streaming.rtsp;
 import java.util.HashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import io.chengguo.streaming.rtp.RTPResolver;
 import io.chengguo.streaming.rtp.RtpPacket;
 import io.chengguo.streaming.rtsp.header.CSeqHeader;
 import io.chengguo.streaming.rtsp.header.SessionHeader;
@@ -24,6 +25,7 @@ public class RTSPSession {
     private ITransport transport;
     private IResolver.IResolverCallback<Response> mRtspResolverCallback;
     private HashMap<Integer, Request> requestList = new HashMap<>();
+    private IResolver.IResolverCallback<RtpPacket> mRtpResolverCallback;
 
     public RTSPSession(String target, int port, TransportMethod method) {
         this.target = target;
@@ -35,7 +37,8 @@ public class RTSPSession {
 
     private void setRTSPAndCallback() {
         transport.setRtspResolver(new RTSPResolver());
-        transport.getResolver().setResolverCallback(new IResolver.IResolverCallback<Response>() {
+        transport.setRtpResolver(new RTPResolver());
+        transport.getRtspResolver().setResolverCallback(new IResolver.IResolverCallback<Response>() {
             @Override
             public void onResolve(Response response) {
                 //获取暂存中的Request
@@ -73,7 +76,7 @@ public class RTSPSession {
     }
 
     public void setRTPCallback(IResolver.IResolverCallback<RtpPacket> rtpResolverCallback) {
-        transport.getResolver().setResolverCallback(rtpResolverCallback);
+        mRtpResolverCallback = rtpResolverCallback;
     }
 
     public void send(Request request) {

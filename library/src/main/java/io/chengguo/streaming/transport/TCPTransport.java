@@ -9,6 +9,7 @@ import java.net.Socket;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+import io.chengguo.streaming.rtp.RtpPacket;
 import io.chengguo.streaming.rtsp.IMessage;
 import io.chengguo.streaming.rtsp.IResolver;
 import io.chengguo.streaming.rtsp.ITransportListener;
@@ -28,6 +29,7 @@ public class TCPTransport implements ITransport {
     private OutputStream outputStream;
     private SafeTransportListener transportListener;
     private IResolver<Integer, Response> mRtspResolver;
+    private IResolver<Integer, RtpPacket> mRtpResolver;
     private IMessage mMessage;
 
     public TCPTransport(String hostname, int port, int timeout) {
@@ -56,8 +58,12 @@ public class TCPTransport implements ITransport {
                     registerResolver();
                     int firstByte;
                     while ((firstByte = in.readUnsignedByte()) != -1) {
-                        if (firstByte == 36) {//RTP or RTCP
-
+                        System.out.println("First Byte: " + firstByte);
+                        //'$' beginning is the RTP and RTSP
+                        if (firstByte == 36) {
+                            if (mRtpResolver != null) {
+                                mRtpResolver.resolve(firstByte);
+                            }
                         } else {//RTSP
                             if (mRtspResolver != null) {
                                 mRtspResolver.resolve(firstByte);
@@ -72,9 +78,15 @@ public class TCPTransport implements ITransport {
         });
     }
 
+    /**
+     * 将InputStream注册到Resolver中
+     */
     private void registerResolver() {
         if (mRtspResolver != null) {
             mRtspResolver.regist(inputStream);
+        }
+        if (mRtpResolver != null) {
+            mRtpResolver.regist(inputStream);
         }
     }
 
@@ -109,7 +121,7 @@ public class TCPTransport implements ITransport {
     }
 
     @Override
-    public void setRtspResolver(IResolver resolver) {
+    public void setRtspResolver(IResolver<Integer, Response> resolver) {
         //如果存在则释放之前的解析器
         if (mRtspResolver != null) {
             mRtspResolver.release();
@@ -118,7 +130,20 @@ public class TCPTransport implements ITransport {
     }
 
     @Override
-    public IResolver getResolver() {
+    public void setRtpResolver(IResolver<Integer, RtpPacket> resolver) {
+        if (mRtpResolver != null) {
+            mRtpResolver.release();
+        }
+        mRtpResolver = resolver;
+    }
+
+    @Override
+    public IResolver<Integer, Response> getRtspResolver() {
         return mRtspResolver;
+    }
+
+    @Override
+    public IResolver<Integer, RtpPacket> getRtpResolver() {
+        return mRtpResolver;
     }
 }

@@ -1,8 +1,10 @@
 package io.chengguo.streaming.transport;
 
+import io.chengguo.streaming.rtp.RtpPacket;
 import io.chengguo.streaming.rtsp.IMessage;
 import io.chengguo.streaming.rtsp.IResolver;
 import io.chengguo.streaming.rtsp.ITransportListener;
+import io.chengguo.streaming.rtsp.Response;
 
 /**
  * Created by fingerart on 2018-09-08.
@@ -34,12 +36,22 @@ public class UDPTransport implements ITransport {
     }
 
     @Override
-    public void setRtspResolver(IResolver resolver) {
+    public void setRtpResolver(IResolver<Integer, RtpPacket> resolver) {
 
     }
 
     @Override
-    public IResolver getResolver() {
+    public IResolver<Integer, Response> getRtspResolver() {
         return null;
+    }
+
+    @Override
+    public IResolver<Integer, RtpPacket> getRtpResolver() {
+        return null;
+    }
+
+    @Override
+    public void setRtspResolver(IResolver resolver) {
+
     }
 }
