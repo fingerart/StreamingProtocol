@@ -30,7 +30,7 @@ class RTSPResolver implements IResolver<Integer, Response> {
     public void resolve(Integer firstByte) throws IOException {
         String sLine;
         ResolverByLine lineResolver = new ResolverByLine();
-        while ((sLine = reader.readLine()) != null) {
+        while (reader != null && (sLine = reader.readLine()) != null) {
             //拼接上已被读取的第一个字节
             if (firstByte != -1) {
                 sLine = Character.toString((char) firstByte.intValue()) + sLine;
@@ -54,6 +54,7 @@ class RTSPResolver implements IResolver<Integer, Response> {
     @Override
     public void release() {
         reader = null;
+        resolverCallback = null;
     }
 
     /**
