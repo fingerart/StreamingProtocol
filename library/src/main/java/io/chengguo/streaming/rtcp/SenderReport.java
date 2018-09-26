@@ -5,5 +5,11 @@ package io.chengguo.streaming.rtcp;
  * Created by fingerart on 2018/6/20.
  */
 public class SenderReport implements IReport {
+    private int version;
+    private boolean padding;
 
+
+    public static class Resolver {
+
+    }
 }

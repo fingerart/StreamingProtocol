@@ -22,6 +22,11 @@ public class UDPTransport implements ITransport {
     }
 
     @Override
+    public void connectAsync() {
+
+    }
+
+    @Override
     public boolean isConnected() {
         return false;
     }
