@@ -3,6 +3,7 @@ package io.chengguo.streaming.rtp;
 import java.io.DataInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.ByteBuffer;
 
 import io.chengguo.streaming.rtsp.IResolver;
 
@@ -22,7 +23,9 @@ public class RTPResolver implements IResolver<Integer, RtpPacket> {
 
     @Override
     public void resolve(Integer rtpLength) throws IOException {
-
+        System.out.println("read rtp length: "+rtpLength);
+        ByteBuffer buffer = ByteBuffer.allocate(rtpLength);
+        inputStream.readFully(buffer.array());
     }
 
     @Override

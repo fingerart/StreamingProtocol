@@ -104,6 +104,9 @@ public class TCPTransport implements ITransport {
         if (mRtpResolver != null) {
             mRtpResolver.regist(inputStream);
         }
+        if (mRtcpResolver != null) {
+            mRtcpResolver.regist(inputStream);
+        }
     }
 
     @Override
