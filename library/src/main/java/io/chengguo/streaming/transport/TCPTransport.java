@@ -9,6 +9,7 @@ import java.net.Socket;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+import io.chengguo.streaming.rtcp.IReport;
 import io.chengguo.streaming.rtp.RtpPacket;
 import io.chengguo.streaming.rtsp.IMessage;
 import io.chengguo.streaming.rtsp.IResolver;
@@ -30,7 +31,7 @@ public class TCPTransport implements ITransport {
     private SafeTransportListener transportListener;
     private IResolver<Integer, Response> mRtspResolver;
     private IResolver<Integer, RtpPacket> mRtpResolver;
-    private IMessage mMessage;
+    private IResolver<Integer, IReport> mRtcpResolver;
 
     public TCPTransport(String hostname, int port, int timeout) {
         this.timeout = timeout;
@@ -45,31 +46,46 @@ public class TCPTransport implements ITransport {
     }
 
     @Override
-    public void connect() {
+    public void connect() throws IOException {
+        socket.connect(address, timeout);
+        inputStream = socket.getInputStream();
+        outputStream = socket.getOutputStream();
+        transportListener.onConnected();
+        DataInputStream in = new DataInputStream(inputStream);
+        registerResolver();
+        int firstByte;
+        while ((firstByte = in.readUnsignedByte()) != -1) {
+            System.out.println("First Byte: " + firstByte);
+            //'$' beginning is the RTP and RTSP
+            if (firstByte == 36) {
+                int secondByte = in.readUnsignedByte();
+                //channel is rtp
+                if (secondByte == 0) {
+                    if (mRtpResolver != null) {
+                        int rtpLength = in.readUnsignedShort();
+                        mRtpResolver.resolve(rtpLength);
+                    }
+                } else if (secondByte == 1) { //channel is rtcp
+                    if (mRtcpResolver != null) {
+                        int rtcpLength = in.readUnsignedShort();
+                        mRtcpResolver.resolve(rtcpLength);
+                    }
+                }
+            } else {//RTSP
+                if (mRtspResolver != null) {
+                    mRtspResolver.resolve(firstByte);
+                }
+            }
+        }
+    }
+
+    @Override
+    public void connectAsync() {
         EXECUTOR.execute(new Runnable() {
             @Override
             public void run() {
                 try {
-                    socket.connect(address, timeout);
-                    inputStream = socket.getInputStream();
-                    outputStream = socket.getOutputStream();
-                    transportListener.onConnected();
-                    DataInputStream in = new DataInputStream(inputStream);
-                    registerResolver();
-                    int firstByte;
-                    while ((firstByte = in.readUnsignedByte()) != -1) {
-                        System.out.println("First Byte: " + firstByte);
-                        //'$' beginning is the RTP and RTSP
-                        if (firstByte == 36) {
-                            if (mRtpResolver != null) {
-                                mRtpResolver.resolve(firstByte);
-                            }
-                        } else {//RTSP
-                            if (mRtspResolver != null) {
-                                mRtspResolver.resolve(firstByte);
-                            }
-                        }
-                    }
+                    connect();
                 } catch (IOException e) {
                     e.printStackTrace();
                     transportListener.onConnectFail(e);
@@ -113,6 +129,15 @@ public class TCPTransport implements ITransport {
     public void disconnect() {
         try {
             socket.close();
+            if (mRtspResolver != null) {
+                mRtspResolver.release();
+            }
+            if (mRtpResolver != null) {
+                mRtpResolver.release();
+            }
+            if (mRtcpResolver != null) {
+                mRtcpResolver.release();
+            }
         } catch (IOException e) {
             e.printStackTrace();
         } finally {
@@ -138,6 +163,14 @@ public class TCPTransport implements ITransport {
     }
 
     @Override
+    public void setRtcpResolver(IResolver<Integer, IReport> rtcpResolver) {
+        if (mRtcpResolver != null) {
+            mRtcpResolver.release();
+        }
+        mRtcpResolver = rtcpResolver;
+    }
+
+    @Override
     public IResolver<Integer, Response> getRtspResolver() {
         return mRtspResolver;
     }
@@ -145,5 +178,10 @@ public class TCPTransport implements ITransport {
     @Override
     public IResolver<Integer, RtpPacket> getRtpResolver() {
         return mRtpResolver;
+    }
+
+    @Override
+    public IResolver<Integer, IReport> getRtcpResolver() {
+        return mRtcpResolver;
     }
 }

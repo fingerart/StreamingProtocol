@@ -3,6 +3,8 @@ package io.chengguo.streaming.rtsp;
 import java.util.HashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import io.chengguo.streaming.rtcp.IReport;
+import io.chengguo.streaming.rtcp.RTCPResolver;
 import io.chengguo.streaming.rtp.RTPResolver;
 import io.chengguo.streaming.rtp.RtpPacket;
 import io.chengguo.streaming.rtsp.header.CSeqHeader;
@@ -20,12 +22,13 @@ public class RTSPSession {
     private String target;
     private int port;
     private TransportMethod method;
+    private ITransport transport;
     private String session;
     private AtomicInteger sequence = new AtomicInteger();
-    private ITransport transport;
-    private IResolver.IResolverCallback<Response> mRtspResolverCallback;
     private HashMap<Integer, Request> requestList = new HashMap<>();
+    private IResolver.IResolverCallback<Response> mRtspResolverCallback;
     private IResolver.IResolverCallback<RtpPacket> mRtpResolverCallback;
+    private IResolver.IResolverCallback<IReport> mRtcpResolverCallback;
 
     public RTSPSession(String target, int port, TransportMethod method) {
         this.target = target;
@@ -38,6 +41,7 @@ public class RTSPSession {
     private void setRTSPAndCallback() {
         transport.setRtspResolver(new RTSPResolver());
         transport.setRtpResolver(new RTPResolver());
+        transport.setRtcpResolver(new RTCPResolver());
         transport.getRtspResolver().setResolverCallback(new IResolver.IResolverCallback<Response>() {
             @Override
             public void onResolve(Response response) {
@@ -60,11 +64,8 @@ public class RTSPSession {
         });
     }
 
-    private void setRTPAndCallback() {
-    }
-
     public void connect() {
-        transport.connect();
+        transport.connectAsync();
     }
 
     public void setTransportListener(ITransportListener transportListener) {
@@ -77,6 +78,10 @@ public class RTSPSession {
 
     public void setRTPCallback(IResolver.IResolverCallback<RtpPacket> rtpResolverCallback) {
         mRtpResolverCallback = rtpResolverCallback;
+    }
+
+    public void setRTCPCallback(IResolver.IResolverCallback<IReport> rtcpResolverCallback) {
+        mRtcpResolverCallback = rtcpResolverCallback;
     }
 
     public void send(Request request) {
