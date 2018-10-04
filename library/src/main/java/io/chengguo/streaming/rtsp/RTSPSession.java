@@ -27,8 +27,6 @@ public class RTSPSession {
     private AtomicInteger sequence = new AtomicInteger();
     private HashMap<Integer, Request> requestList = new HashMap<>();
     private IResolver.IResolverCallback<Response> mRtspResolverCallback;
-    private IResolver.IResolverCallback<RtpPacket> mRtpResolverCallback;
-    private IResolver.IResolverCallback<IReport> mRtcpResolverCallback;
 
     public RTSPSession(String target, int port, TransportMethod method) {
         this.target = target;
@@ -77,11 +75,19 @@ public class RTSPSession {
     }
 
     public void setRTPCallback(IResolver.IResolverCallback<RtpPacket> rtpResolverCallback) {
-        mRtpResolverCallback = rtpResolverCallback;
+        IResolver<Integer, RtpPacket> rtpResolver = transport.getRtpResolver();
+        if (rtpResolver != null) {
+            rtpResolver.release();
+            rtpResolver.setResolverCallback(rtpResolverCallback);
+        }
     }
 
     public void setRTCPCallback(IResolver.IResolverCallback<IReport> rtcpResolverCallback) {
-        mRtcpResolverCallback = rtcpResolverCallback;
+        IResolver<Integer, IReport> rtcpResolver = transport.getRtcpResolver();
+        if (rtcpResolver != null) {
+            rtcpResolver.release();
+            rtcpResolver.setResolverCallback(rtcpResolverCallback);
+        }
     }
 
     public void send(Request request) {

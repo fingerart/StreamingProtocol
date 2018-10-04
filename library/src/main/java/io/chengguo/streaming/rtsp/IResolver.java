@@ -34,6 +34,6 @@ public interface IResolver<T, Result> {
     void release();
 
     interface IResolverCallback<Result> {
-        void onResolve(Result t);
+        void onResolve(Result result);
     }
 }

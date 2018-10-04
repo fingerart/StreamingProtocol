@@ -6,6 +6,7 @@ import java.io.InputStream;
 import java.nio.ByteBuffer;
 
 import io.chengguo.streaming.rtsp.IResolver;
+import io.chengguo.streaming.utils.L;
 
 /**
  * Created by fingerart on 2018-09-18.
@@ -22,13 +23,27 @@ public class RTCPResolver implements IResolver<Integer, IReport> {
 
     @Override
     public void resolve(Integer rtcpLength) throws IOException {
-        System.out.println("read rtcp length: " + rtcpLength);
+        L.d("RTCP length: " + rtcpLength);
         ByteBuffer buffer = ByteBuffer.allocate(rtcpLength);
         inputStream.readFully(buffer.array());
-        byte v = buffer.get();//8bit
-        byte pt = buffer.get();//8bit
-        short length = buffer.getShort();//16bit
-        System.out.println("parse length: " + length);
+        byte pt = buffer.get(1);//8bit
+        short length = buffer.getShort(2);//16bit
+        L.d("RTCPResolver#resolve [pt=" + ((int) pt & 0xff) + ", length=" + length + "]");
+        if (resolverCallback != null) {
+            IReport report = null;
+            switch (pt) {
+                case SourceDescription.PACKET_TYPE:
+                    report = SourceDescription.Resolver.resolve(buffer);
+                    break;
+                case SenderReport.PACKET_TYPE:
+                    report = SenderReport.Resolver.resolve(buffer);
+                    break;
+                case ReceiverReport.PACKET_TYPE:
+                    report = ReceiverReport.Resolver.resolve(buffer);
+                    break;
+            }
+            resolverCallback.onResolve(report);
+        }
     }
 
     @Override

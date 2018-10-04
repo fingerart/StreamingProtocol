@@ -23,9 +23,13 @@ public class RTPResolver implements IResolver<Integer, RtpPacket> {
 
     @Override
     public void resolve(Integer rtpLength) throws IOException {
-        System.out.println("read rtp length: "+rtpLength);
+        System.out.println("RTP length: " + rtpLength);
         ByteBuffer buffer = ByteBuffer.allocate(rtpLength);
         inputStream.readFully(buffer.array());
+        if (resolverCallback != null) {
+            RtpPacket rtpPacket = RtpPacket.Resolver.resolve(buffer);
+            resolverCallback.onResolve(rtpPacket);
+        }
     }
 
     @Override

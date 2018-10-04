@@ -7,6 +7,8 @@ import org.junit.Test;
 
 import java.net.URI;
 
+import io.chengguo.streaming.rtcp.IReport;
+import io.chengguo.streaming.rtp.RtpPacket;
 import io.chengguo.streaming.rtsp.IResolver;
 import io.chengguo.streaming.rtsp.Method;
 import io.chengguo.streaming.rtsp.RTSPSession;
@@ -46,6 +48,19 @@ public class RTSPClientTest {
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
+            }
+        });
+        session.setRTCPCallback(new IResolver.IResolverCallback<IReport>() {
+            @Override
+            public void onResolve(IReport report) {
+                System.out.println("RTCP report: " + report);
+            }
+        });
+
+        session.setRTPCallback(new IResolver.IResolverCallback<RtpPacket>() {
+            @Override
+            public void onResolve(RtpPacket rtpPacket) {
+                System.out.println("RTP packet: " + rtpPacket);
             }
         });
     }
