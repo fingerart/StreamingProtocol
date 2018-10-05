@@ -6,9 +6,27 @@
     android:layout_height="match_parent"
     tools:context="io.chengguo.live.MainActivity">
 
-    <net.majorkernelpanic.streaming.gl.SurfaceView
+    <SurfaceView
         android:id="@+id/surface"
         android:layout_width="match_parent"
         android:layout_height="match_parent" />
 
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom">
+
+        <Button
+            android:id="@+id/btn_start"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="开始拉流" />
+
+        <Button
+            android:id="@+id/btn_stop"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="bottom"
+            android:text="停止拉流" />
+    </LinearLayout>
 </FrameLayout>

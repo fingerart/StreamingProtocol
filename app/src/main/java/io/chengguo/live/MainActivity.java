@@ -1,23 +1,38 @@
 package io.chengguo.live;
 
-import android.content.SharedPreferences;
 import android.content.pm.ActivityInfo;
-import android.preference.PreferenceManager;
-import android.support.v7.app.AppCompatActivity;
+import android.media.AudioFormat;
+import android.media.AudioManager;
+import android.media.AudioTrack;
+import android.media.MediaPlayer;
 import android.os.Bundle;
+import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
+import android.view.SurfaceView;
+import android.view.View;
 import android.view.WindowManager;
 
-import net.majorkernelpanic.streaming.Session;
-import net.majorkernelpanic.streaming.SessionBuilder;
-import net.majorkernelpanic.streaming.gl.SurfaceView;
-import net.majorkernelpanic.streaming.rtsp.RtspClient;
-import net.majorkernelpanic.streaming.rtsp.RtspServer;
+import java.net.URI;
 
-public class MainActivity extends AppCompatActivity {
+import io.chengguo.streaming.rtcp.IReport;
+import io.chengguo.streaming.rtp.RtpPacket;
+import io.chengguo.streaming.rtsp.IResolver;
+import io.chengguo.streaming.rtsp.Method;
+import io.chengguo.streaming.rtsp.RTSPSession;
+import io.chengguo.streaming.rtsp.Request;
+import io.chengguo.streaming.rtsp.Response;
+import io.chengguo.streaming.rtsp.header.Header;
+import io.chengguo.streaming.rtsp.header.TransportHeader;
+import io.chengguo.streaming.transport.TransportMethod;
+
+public class MainActivity extends AppCompatActivity implements View.OnClickListener {
+
+    private static final String TAG = "MainActivity";
 
     private SurfaceView mSurfaceView;
-    private Session session;
-    private RtspClient client;
+    private RTSPSession session;
+    private String baseUri;
+    private AudioTrack audioTrack;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -27,34 +42,91 @@ public class MainActivity extends AppCompatActivity {
         setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
 
         mSurfaceView = findViewById(R.id.surface);
+        findViewById(R.id.btn_start).setOnClickListener(this);
+        findViewById(R.id.btn_stop).setOnClickListener(this);
 
-        // Sets the port of the RTSP server to 1234
-        SharedPreferences.Editor editor = PreferenceManager.getDefaultSharedPreferences(this).edit();
-        editor.putString(RtspServer.KEY_PORT, String.valueOf(1234));
-        editor.apply();
-
-        session = SessionBuilder.getInstance()
-                .setSurfaceView(mSurfaceView)
-                .setPreviewOrientation(90)
-                .setContext(getApplicationContext())
-                .setAudioEncoder(SessionBuilder.AUDIO_NONE)
-                .setVideoEncoder(SessionBuilder.VIDEO_H264)
-                .build();
-        session.startPreview();
-    }
-
-    @Override
-    protected void onStart() {
-        super.onStart();
-        client = new RtspClient();
-        client.setSession(session);
-        client.setServerAddress("", 554);
-        client.setStreamPath("/stream.sdp");
+        int minBufferSize = AudioTrack.getMinBufferSize(44100, AudioFormat.CHANNEL_IN_STEREO, AudioFormat.ENCODING_PCM_16BIT);
+        audioTrack = new AudioTrack(AudioManager.STREAM_MUSIC, 44100, AudioFormat.CHANNEL_IN_STEREO, AudioFormat.ENCODING_PCM_16BIT, minBufferSize, AudioTrack.MODE_STREAM);
     }
 
     @Override
     protected void onResume() {
         super.onResume();
-        client.startStream();
+        session = new RTSPSession("192.168.1.4", 554, TransportMethod.TCP);
+        session.setRTSPResolverCallback(new IResolver.IResolverCallback<Response>() {
+            @Override
+            public void onResolve(Response response) {
+                Log.d(TAG, "onResolveRTSP: " + response.toString());
+                if (response.getLine().isSuccessful()) {
+                    Request request = response.getRequest();
+                    switch (request.getLine().getMethod()) {
+                        case OPTIONS:
+                            Request des = new Request.Builder()
+                                    .method(Method.DESCRIBE)
+                                    .uri(request.getLine().getUri())
+                                    .build();
+                            session.send(des);
+                            break;
+                        case DESCRIBE:
+                            Header base = response.getHeader("Content-Base");
+                            baseUri = (String) base.getRawValue();
+                            Request set = new Request.Builder()
+                                    .method(Method.SETUP)
+                                    .uri(URI.create(baseUri + "track1"))
+                                    .addHeader(new TransportHeader.Builder()
+                                            .specifier(TransportHeader.Specifier.TCP)
+                                            .broadcastType(TransportHeader.BroadcastType.unicast)
+                                            .clientPort(50846, 50847)
+                                            .build())
+                                    .build();
+                            session.send(set);
+                            break;
+                        case SETUP:
+                            Request play = new Request.Builder()
+                                    .method(Method.PLAY)
+                                    .uri(baseUri)
+                                    .build();
+                            session.send(play);
+                            break;
+                        case PLAY:
+                            break;
+                    }
+                }
+            }
+        });
+        session.setRTCPCallback(new IResolver.IResolverCallback<IReport>() {
+            @Override
+            public void onResolve(IReport iReport) {
+                System.out.println("iReport = [" + iReport + "]");
+            }
+        });
+        session.setRTPCallback(new IResolver.IResolverCallback<RtpPacket>() {
+            @Override
+            public void onResolve(RtpPacket rtpPacket) {
+                System.out.println("rtpPacket = [" + rtpPacket + "]");
+            }
+        });
+        session.connect();
     }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        session.disconnect();
+    }
+
+    @Override
+    public void onClick(View v) {
+        switch (v.getId()) {
+            case R.id.btn_start:
+                Request request = new Request.Builder().method(Method.OPTIONS).uri(URI.create("rtsp://192.168.1.4/NeverPlay.mp3")).build();
+                session.send(request);
+                break;
+            case R.id.btn_stop:
+                Request stop = new Request.Builder().method(Method.PAUSE).uri(baseUri).build();
+                session.send(stop);
+                break;
+        }
+    }
+
 }

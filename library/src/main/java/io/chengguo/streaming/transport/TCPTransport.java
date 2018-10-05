@@ -16,6 +16,7 @@ import io.chengguo.streaming.rtsp.IResolver;
 import io.chengguo.streaming.rtsp.ITransportListener;
 import io.chengguo.streaming.rtsp.Response;
 import io.chengguo.streaming.rtsp.SafeTransportListener;
+import io.chengguo.streaming.utils.L;
 
 /**
  * Created by fingerart on 2018-09-08.
@@ -55,7 +56,7 @@ public class TCPTransport implements ITransport {
         registerResolver();
         int firstByte;
         while ((firstByte = in.readUnsignedByte()) != -1) {
-            System.out.println("First Byte: " + firstByte);
+            L.d("First Byte: " + firstByte);
             //'$' beginning is the RTP and RTCP
             if (firstByte == 36) {
                 int secondByte = in.readUnsignedByte();
@@ -120,7 +121,11 @@ public class TCPTransport implements ITransport {
             @Override
             public void run() {
                 try {
-                    outputStream.write(message.toRaw());
+                    if (isConnected()) {
+                        outputStream.write(message.toRaw());
+                    } else {
+                        L.w("Not connect.");
+                    }
                 } catch (IOException e) {
                     e.printStackTrace();
                 }

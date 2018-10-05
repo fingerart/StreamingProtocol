@@ -82,6 +82,9 @@ public class Response implements IMessage {
         return toString().getBytes();
     }
 
+    /**
+     * 响应行
+     */
     public static class Line {
         private Version version;
         private int statusCode;
@@ -109,6 +112,10 @@ public class Response implements IMessage {
 
         public void setStatusMessage(String statusMessage) {
             this.statusMessage = statusMessage;
+        }
+
+        public boolean isSuccessful() {
+            return statusCode <= 300 && statusCode >= 200;
         }
 
         @Override
