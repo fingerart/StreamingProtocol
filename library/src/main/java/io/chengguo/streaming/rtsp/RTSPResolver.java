@@ -1,9 +1,11 @@
 package io.chengguo.streaming.rtsp;
 
 import java.io.BufferedReader;
+import java.io.DataInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.UnsupportedEncodingException;
 
 import io.chengguo.streaming.rtsp.header.CSeqHeader;
 import io.chengguo.streaming.rtsp.header.ContentLengthHeader;
@@ -18,12 +20,12 @@ import io.chengguo.streaming.rtsp.header.TransportHeader;
 class RTSPResolver implements IResolver<Integer, Response> {
 
     private IResolverCallback<Response> resolverCallback;
-    private BufferedReader reader;
+    private DataInputStream reader;
 
     @Override
     public void regist(InputStream inputStream) {
         //转换InputStream的类型
-        reader = new BufferedReader(new InputStreamReader(inputStream));
+        reader = new DataInputStream(inputStream);
     }
 
     @Override

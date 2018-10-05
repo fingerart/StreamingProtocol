@@ -130,6 +130,11 @@ public class Request implements IMessage {
             return this;
         }
 
+        public Builder uri(String uri) {
+            this.uri = URI.create(uri);
+            return this;
+        }
+
         public Builder version(String version) {
             this.version.setVersion(version);
             return this;

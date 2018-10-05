@@ -77,7 +77,6 @@ public class RTSPSession {
     public void setRTPCallback(IResolver.IResolverCallback<RtpPacket> rtpResolverCallback) {
         IResolver<Integer, RtpPacket> rtpResolver = transport.getRtpResolver();
         if (rtpResolver != null) {
-            rtpResolver.release();
             rtpResolver.setResolverCallback(rtpResolverCallback);
         }
     }
@@ -85,7 +84,6 @@ public class RTSPSession {
     public void setRTCPCallback(IResolver.IResolverCallback<IReport> rtcpResolverCallback) {
         IResolver<Integer, IReport> rtcpResolver = transport.getRtcpResolver();
         if (rtcpResolver != null) {
-            rtcpResolver.release();
             rtcpResolver.setResolverCallback(rtcpResolverCallback);
         }
     }
@@ -110,5 +108,11 @@ public class RTSPSession {
 
     public boolean isConnected() {
         return transport.isConnected();
+    }
+
+    public void disconnect() {
+        if (isConnected()) {
+            transport.disconnect();
+        }
     }
 }

@@ -44,6 +44,8 @@ public class RTSPClientTest {
                         case SETUP:
                             play();
                             break;
+                        case PLAY:
+                            pause();
                     }
                 } catch (Exception e) {
                     e.printStackTrace();
@@ -114,6 +116,17 @@ public class RTSPClientTest {
                 .build();
         session.send(request);
     }
+
+    private void pause() throws InterruptedException {
+        Thread.sleep(1000);
+        Request request = new Request.Builder()
+                .uri(URI.create("rtsp://127.0.0.1/NeverPlay.mp3"))
+                .method(Method.PAUSE)
+                .build();
+        session.send(request);
+    }
+
+
 
     @After
     public void tearDown() throws Exception {
