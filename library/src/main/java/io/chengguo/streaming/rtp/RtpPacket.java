@@ -36,7 +36,49 @@ public class RtpPacket {
     private long[] csrcs;
     private byte[] payload;
 
+    public int getVersion() {
+        return version;
+    }
 
+    public boolean isPadding() {
+        return padding;
+    }
+
+    public boolean isExtension() {
+        return extension;
+    }
+
+    public int getCsrcCount() {
+        return csrcCount;
+    }
+
+    public boolean isMarker() {
+        return marker;
+    }
+
+    public int getPayloadType() {
+        return payloadType;
+    }
+
+    public int getSequenceNumber() {
+        return sequenceNumber;
+    }
+
+    public long getTimestamp() {
+        return timestamp;
+    }
+
+    public long getSsrc() {
+        return ssrc;
+    }
+
+    public long[] getCsrcs() {
+        return csrcs;
+    }
+
+    public byte[] getPayload() {
+        return payload;
+    }
 
     @Override
     public String toString() {
@@ -51,7 +93,7 @@ public class RtpPacket {
                 ", timestamp=" + timestamp +
                 ", ssrc=" + ssrc +
                 ", csrcs=" + Arrays.toString(csrcs) +
-                ", payload=" + Arrays.toString(payload) +
+                ", payload=" + payload.length +
                 '}';
     }
 

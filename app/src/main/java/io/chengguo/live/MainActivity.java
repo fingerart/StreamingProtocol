@@ -12,7 +12,9 @@ import android.view.SurfaceView;
 import android.view.View;
 import android.view.WindowManager;
 
+import java.io.IOException;
 import java.net.URI;
+import java.nio.ByteBuffer;
 
 import io.chengguo.streaming.rtcp.IReport;
 import io.chengguo.streaming.rtp.RtpPacket;
@@ -33,6 +35,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private RTSPSession session;
     private String baseUri;
     private AudioTrack audioTrack;
+    private Decoder decoder;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -46,7 +49,14 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         findViewById(R.id.btn_stop).setOnClickListener(this);
 
         int minBufferSize = AudioTrack.getMinBufferSize(44100, AudioFormat.CHANNEL_IN_STEREO, AudioFormat.ENCODING_PCM_16BIT);
-        audioTrack = new AudioTrack(AudioManager.STREAM_MUSIC, 44100, AudioFormat.CHANNEL_IN_STEREO, AudioFormat.ENCODING_PCM_16BIT, minBufferSize, AudioTrack.MODE_STREAM);
+        try {
+            audioTrack = new AudioTrack(AudioManager.STREAM_MUSIC, 44100, AudioFormat.CHANNEL_IN_STEREO, AudioFormat.ENCODING_PCM_16BIT, minBufferSize, AudioTrack.MODE_STREAM);
+            decoder = new Decoder();
+            decoder.start();
+            audioTrack.play();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     @Override
@@ -72,7 +82,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                             baseUri = (String) base.getRawValue();
                             Request set = new Request.Builder()
                                     .method(Method.SETUP)
-                                    .uri(URI.create(baseUri + "track1"))
+                                    .uri(URI.create(baseUri + "track2"))
                                     .addHeader(new TransportHeader.Builder()
                                             .specifier(TransportHeader.Specifier.TCP)
                                             .broadcastType(TransportHeader.BroadcastType.unicast)
@@ -103,7 +113,15 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         session.setRTPCallback(new IResolver.IResolverCallback<RtpPacket>() {
             @Override
             public void onResolve(RtpPacket rtpPacket) {
-                System.out.println("rtpPacket = [" + rtpPacket + "]");
+//                System.out.println("rtpPacket = [" + rtpPacket + "]");
+//                decoder.input(rtpPacket.getPayload(), 0, rtpPacket.getPayload().length, rtpPacket.getTimestamp());
+            }
+        });
+        decoder.setCallback(new Decoder.Callback() {
+            @Override
+            public void onOutput(byte[] bytes, int offset, int size) {
+                System.out.println("MainActivity.onOutput#play");
+                audioTrack.write(bytes, offset, size);
             }
         });
         session.connect();
@@ -119,7 +137,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     public void onClick(View v) {
         switch (v.getId()) {
             case R.id.btn_start:
-                Request request = new Request.Builder().method(Method.OPTIONS).uri(URI.create("rtsp://192.168.1.4/NeverPlay.mp3")).build();
+                Request request = new Request.Builder().method(Method.OPTIONS).uri(URI.create("rtsp://172.17.0.2/Tanya.webm")).build();
                 session.send(request);
                 break;
             case R.id.btn_stop:
