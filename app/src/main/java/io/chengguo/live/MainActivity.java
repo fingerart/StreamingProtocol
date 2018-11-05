@@ -144,25 +144,30 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             }
         });
         session.setRTPCallback(new IResolver.IResolverCallback<RtpPacket>() {
-            private boolean isFirst = true;
 
             @Override
             public void onResolve(RtpPacket rtpPacket) {
                 System.out.println("rtpPacket = [" + rtpPacket + "]");
-                decoder.input(rtpPacket.getPayload(), 0, rtpPacket.getPayload().length, rtpPacket.getTimestamp());
+                try{
+                    decoder.input(rtpPacket.getPayload(), 0, rtpPacket.getPayload().length, rtpPacket.getTimestamp());
+                }catch (Exception e) {
+                    e.printStackTrace();
+                    session.disconnect();
+                    decoder.stop();
+                }
             }
         });
         decoder.setCallback(new Decoder.Callback() {
             @Override
             public void onOutput(byte[] bytes, int offset, int size) {
                 System.out.println("MainActivity.onOutput#play");
-//                audioTrack.write(bytes, offset, size);
-                try {
-                    o.write(bytes, offset, size);
-                    o.flush();
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
+                audioTrack.write(bytes, offset, size);
+//                try {
+//                    o.write(bytes, offset, size);
+//                    o.flush();
+//                } catch (Exception e) {
+//                    e.printStackTrace();
+//                }
             }
         });
         session.connect();

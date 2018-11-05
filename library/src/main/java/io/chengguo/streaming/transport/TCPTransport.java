@@ -47,7 +47,7 @@ public class TCPTransport implements ITransport {
     }
 
     @Override
-    public void connect() throws IOException {
+    public void connect() throws Exception {
         socket.connect(address, timeout);
         inputStream = socket.getInputStream();
         outputStream = socket.getOutputStream();
@@ -55,7 +55,7 @@ public class TCPTransport implements ITransport {
         DataInputStream in = new DataInputStream(inputStream);
         registerResolver();
         int firstByte;
-        while ((firstByte = in.readUnsignedByte()) != -1) {
+        while ((firstByte = in.readUnsignedByte()) > 0) {
             L.d("First Byte: " + firstByte);
             //'$' beginning is the RTP and RTCP
             if (firstByte == 36) {
@@ -87,7 +87,7 @@ public class TCPTransport implements ITransport {
             public void run() {
                 try {
                     connect();
-                } catch (IOException e) {
+                } catch (Exception e) {
                     e.printStackTrace();
                     transportListener.onConnectFail(e);
                 }

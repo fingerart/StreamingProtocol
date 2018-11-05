@@ -5,7 +5,7 @@ import java.nio.ByteBuffer;
 import static io.chengguo.streaming.utils.Bits.getLongByInt;
 
 /**
- * 发送者报告
+ * 发送端报告
  *
  *         0                   1                   2                   3
  *         0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1

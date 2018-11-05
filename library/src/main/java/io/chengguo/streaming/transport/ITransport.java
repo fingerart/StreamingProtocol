@@ -16,7 +16,7 @@ public interface ITransport {
 
     void setTransportListener(ITransportListener listener);
 
-    void connect() throws IOException;
+    void connect() throws Exception;
 
     void connectAsync();
 
