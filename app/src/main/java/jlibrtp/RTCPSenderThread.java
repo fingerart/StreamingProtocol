@@ -263,7 +263,6 @@ public class RTCPSenderThread extends Thread {
 			incSR = true;
 		}
 		
-		
 		/*********** Actually create the packet ***********/
 		// Create compound packet
 		CompRtcpPkt compPkt = new CompRtcpPkt();

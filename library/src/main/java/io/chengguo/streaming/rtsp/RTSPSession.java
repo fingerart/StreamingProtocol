@@ -1,9 +1,11 @@
 package io.chengguo.streaming.rtsp;
 
+import android.util.Log;
+
 import java.util.HashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import io.chengguo.streaming.rtcp.IReport;
+import io.chengguo.streaming.rtcp.IPacket;
 import io.chengguo.streaming.rtcp.RTCPResolver;
 import io.chengguo.streaming.rtp.RTPResolver;
 import io.chengguo.streaming.rtp.RtpPacket;
@@ -19,7 +21,9 @@ import io.chengguo.streaming.utils.Utils;
  */
 public class RTSPSession {
 
-    private String target;
+    private static final String TAG = RTSPSession.class.getSimpleName();
+
+    private String host;
     private int port;
     private TransportMethod method;
     private ITransport transport;
@@ -28,15 +32,15 @@ public class RTSPSession {
     private HashMap<Integer, Request> requestList = new HashMap<>();
     private IResolver.IResolverCallback<Response> mRtspResolverCallback;
 
-    public RTSPSession(String target, int port, TransportMethod method) {
-        this.target = target;
+    public RTSPSession(String host, int port, TransportMethod method) {
+        this.host = host;
         this.port = port;
         this.method = method;
-        transport = method.createTransport(target, port, 3000);
         setRTSPAndCallback();
     }
 
     private void setRTSPAndCallback() {
+        transport = method.createTransport(host, port, 3000);
         transport.setRtspResolver(new RTSPResolver());
         transport.setRtpResolver(new RTPResolver());
         transport.setRtcpResolver(new RTCPResolver());
@@ -60,6 +64,12 @@ public class RTSPSession {
                 }
             }
         });
+        transport.getRtcpResolver().setResolverCallback(new IResolver.IResolverCallback<IPacket>() {
+            @Override
+            public void onResolve(IPacket iReport) {
+                Log.d(TAG, iReport.toString());
+            }
+        });
     }
 
     public void connect() {
@@ -81,8 +91,8 @@ public class RTSPSession {
         }
     }
 
-    public void setRTCPCallback(IResolver.IResolverCallback<IReport> rtcpResolverCallback) {
-        IResolver<Integer, IReport> rtcpResolver = transport.getRtcpResolver();
+    public void setRTCPCallback(IResolver.IResolverCallback<IPacket> rtcpResolverCallback) {
+        IResolver<Integer, IPacket> rtcpResolver = transport.getRtcpResolver();
         if (rtcpResolver != null) {
             rtcpResolver.setResolverCallback(rtcpResolverCallback);
         }

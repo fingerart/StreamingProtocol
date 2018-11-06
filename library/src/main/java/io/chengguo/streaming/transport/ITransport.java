@@ -1,8 +1,6 @@
 package io.chengguo.streaming.transport;
 
-import java.io.IOException;
-
-import io.chengguo.streaming.rtcp.IReport;
+import io.chengguo.streaming.rtcp.IPacket;
 import io.chengguo.streaming.rtp.RtpPacket;
 import io.chengguo.streaming.rtsp.IMessage;
 import io.chengguo.streaming.rtsp.IResolver;
@@ -30,11 +28,11 @@ public interface ITransport {
 
     void setRtpResolver(IResolver<Integer, RtpPacket> rtpResolver);
 
-    void setRtcpResolver(IResolver<Integer, IReport> rtcpResolver);
+    void setRtcpResolver(IResolver<Integer, IPacket> rtcpResolver);
 
     IResolver<Integer, Response> getRtspResolver();
 
     IResolver<Integer, RtpPacket> getRtpResolver();
 
-    IResolver<Integer, IReport> getRtcpResolver();
+    IResolver<Integer, IPacket> getRtcpResolver();
 }

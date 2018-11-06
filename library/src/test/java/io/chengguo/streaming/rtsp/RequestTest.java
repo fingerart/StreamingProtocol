@@ -3,6 +3,8 @@ package io.chengguo.streaming.rtsp;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.net.URI;
+
 /**
  * Created by fingerart on 2018-07-17.
  */

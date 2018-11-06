@@ -9,12 +9,12 @@ import io.chengguo.streaming.rtsp.IResolver;
 import io.chengguo.streaming.utils.L;
 
 /**
- * Created by fingerart on 2018-09-18.
+ *
  */
-public class RTCPResolver implements IResolver<Integer, IReport> {
+public class RTCPResolver implements IResolver<Integer, IPacket> {
 
     private DataInputStream inputStream;
-    private IResolverCallback<IReport> resolverCallback;
+    private IResolverCallback<IPacket> resolverCallback;
 
     @Override
     public void regist(InputStream inputStream) {
@@ -30,7 +30,7 @@ public class RTCPResolver implements IResolver<Integer, IReport> {
         short length = buffer.getShort(2);//16bit
         L.d("RTCPResolver#resolve [pt=" + ((int) pt & 0xff) + ", length=" + length + "]");
         if (resolverCallback != null) {
-            IReport report = null;
+            IPacket report = null;
             switch (pt) {
                 case SourceDescription.PACKET_TYPE:
                     report = SourceDescription.Resolver.resolve(buffer);
@@ -47,7 +47,7 @@ public class RTCPResolver implements IResolver<Integer, IReport> {
     }
 
     @Override
-    public void setResolverCallback(IResolverCallback<IReport> resolverCallback) {
+    public void setResolverCallback(IResolverCallback<IPacket> resolverCallback) {
         this.resolverCallback = resolverCallback;
     }
 

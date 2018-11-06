@@ -3059,7 +3059,7 @@
 											"height": 13,
 											"autoResize": false,
 											"underline": false,
-											"text": "+target(target: String): Builder",
+											"text": "+target(host: String): Builder",
 											"horizontalAlignment": 0,
 											"verticalAlignment": 5,
 											"wordWrap": false

@@ -15,7 +15,7 @@ import io.chengguo.streaming.rtsp.IMessage;
 import io.chengguo.streaming.rtsp.IResolver;
 import io.chengguo.streaming.rtsp.ITransportListener;
 import io.chengguo.streaming.rtsp.Response;
-import io.chengguo.streaming.rtsp.SafeTransportListener;
+import io.chengguo.streaming.rtsp.TransportListenerWrapper;
 import io.chengguo.streaming.utils.L;
 
 /**
@@ -29,7 +29,7 @@ public class TCPTransport implements ITransport {
     private Socket socket;
     private InputStream inputStream;
     private OutputStream outputStream;
-    private SafeTransportListener transportListener;
+    private TransportListenerWrapper transportListener;
     private IResolver<Integer, Response> mRtspResolver;
     private IResolver<Integer, RtpPacket> mRtpResolver;
     private IResolver<Integer, IReport> mRtcpResolver;
@@ -38,7 +38,7 @@ public class TCPTransport implements ITransport {
         this.timeout = timeout;
         address = new InetSocketAddress(hostname, port);
         socket = new Socket();
-        transportListener = new SafeTransportListener();
+        transportListener = new TransportListenerWrapper();
     }
 
     @Override
@@ -90,6 +90,8 @@ public class TCPTransport implements ITransport {
                 } catch (Exception e) {
                     e.printStackTrace();
                     transportListener.onConnectFail(e);
+                } finally {
+                    transportListener.onDisconnected();
                 }
             }
         });

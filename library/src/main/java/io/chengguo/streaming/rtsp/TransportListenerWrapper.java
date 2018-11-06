@@ -1,9 +1,9 @@
 package io.chengguo.streaming.rtsp;
 
 /**
- * Created by fingerart on 2018-09-09.
+ * TransportListener Wrapper
  */
-public class SafeTransportListener implements ITransportListener {
+public class TransportListenerWrapper implements ITransportListener {
 
     private ITransportListener behaviour;
 
