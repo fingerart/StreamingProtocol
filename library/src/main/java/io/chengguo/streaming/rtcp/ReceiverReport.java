@@ -5,6 +5,8 @@ import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 
+import io.chengguo.streaming.utils.Bits;
+
 //@formatter:off
 //|        0                   1                   2                   3
 //|         0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
@@ -105,13 +107,16 @@ public class ReceiverReport implements IPacket {
 
     @Override
     public byte[] toRaw() {
-//version & 0x3
         ByteBuffer buffer = ByteBuffer.allocate(8 + (ReportBlock.SIZE * reportBlocks.size()));
-        byte bb = (byte) (0xff & (version & 0x3) << 6);
-//        buffer.put()
-        return new byte[0];
-    }
+        byte v = (byte) ((((version & 0x3) << 6) | (((padding ? 1 : 0) & 0x1) << 5) | (counter & 0x1f)) & 0xff);
+        buffer.put(v);
+        buffer.put((byte) (pt & 0xff));
+        buffer.put(Bits.intToByteArray(length), 2, 2);
+        buffer.put(Bits.longToByteArray(ssrcSender), 4, 4);
+        // TODO: 2018/11/6 report block
 
+        return buffer.array();
+    }
 
     public static class Resolver {
 

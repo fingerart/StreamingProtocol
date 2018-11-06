@@ -1,6 +1,7 @@
 package io.chengguo.streaming.rtcp;
 
 import java.nio.ByteBuffer;
+import java.util.List;
 
 import static io.chengguo.streaming.utils.Bits.getLongByInt;
 
@@ -59,6 +60,7 @@ public class SenderReport implements IPacket {
     private long rtpTimestamp;
     private long packetCount;
     private long octetCount;
+    private ReportBlock[] reportBlocks;
 
     @Override
     public String toString() {
@@ -74,6 +76,7 @@ public class SenderReport implements IPacket {
                 ", rtpTimestamp=" + rtpTimestamp +
                 ", packetCount=" + packetCount +
                 ", octetCount=" + octetCount +
+                ", reportBlocks=" + reportBlocks +
                 '}';
     }
 
