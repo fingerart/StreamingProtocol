@@ -9,7 +9,7 @@ import java.net.Socket;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-import io.chengguo.streaming.rtcp.IReport;
+import io.chengguo.streaming.rtcp.IPacket;
 import io.chengguo.streaming.rtp.RtpPacket;
 import io.chengguo.streaming.rtsp.IMessage;
 import io.chengguo.streaming.rtsp.IResolver;
@@ -32,7 +32,7 @@ public class TCPTransport implements ITransport {
     private TransportListenerWrapper transportListener;
     private IResolver<Integer, Response> mRtspResolver;
     private IResolver<Integer, RtpPacket> mRtpResolver;
-    private IResolver<Integer, IReport> mRtcpResolver;
+    private IResolver<Integer, IPacket> mRtcpResolver;
 
     public TCPTransport(String hostname, int port, int timeout) {
         this.timeout = timeout;
@@ -173,7 +173,7 @@ public class TCPTransport implements ITransport {
     }
 
     @Override
-    public void setRtcpResolver(IResolver<Integer, IReport> rtcpResolver) {
+    public void setRtcpResolver(IResolver<Integer, IPacket> rtcpResolver) {
         if (mRtcpResolver != null) {
             mRtcpResolver.release();
         }
@@ -191,7 +191,7 @@ public class TCPTransport implements ITransport {
     }
 
     @Override
-    public IResolver<Integer, IReport> getRtcpResolver() {
+    public IResolver<Integer, IPacket> getRtcpResolver() {
         return mRtcpResolver;
     }
 }

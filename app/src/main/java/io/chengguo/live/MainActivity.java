@@ -8,7 +8,6 @@ import android.os.Build;
 import android.os.Bundle;
 import android.support.annotation.RequiresApi;
 import android.support.v7.app.AppCompatActivity;
-import android.util.Log;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.View;
@@ -18,16 +17,7 @@ import java.io.IOException;
 import java.net.URI;
 
 import io.chengguo.streaming.RTSPClient;
-import io.chengguo.streaming.rtcp.IReport;
 import io.chengguo.streaming.rtp.RtpPacket;
-import io.chengguo.streaming.rtsp.IResolver;
-import io.chengguo.streaming.rtsp.Method;
-import io.chengguo.streaming.rtsp.RTSPSession;
-import io.chengguo.streaming.rtsp.Request;
-import io.chengguo.streaming.rtsp.Response;
-import io.chengguo.streaming.rtsp.TransportListenerWrapper;
-import io.chengguo.streaming.rtsp.header.Header;
-import io.chengguo.streaming.rtsp.header.TransportHeader;
 import io.chengguo.streaming.transport.TransportMethod;
 
 @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
