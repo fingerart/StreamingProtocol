@@ -1,12 +1,20 @@
 package io.chengguo.streaming.rtsp;
 
-import io.chengguo.streaming.rtsp.header.SupportMethodHeader;
+import io.chengguo.streaming.rtcp.IPacket;
 
 /**
  *
- * Created by fingerart on 2018/7/3.
  */
-public class RtspPacket {
-    public RtspPacket() {
+public class RtspPacket implements IPacket {
+    private int magic;
+    private int channel;
+    private long length;
+    private IPacket[] bs;
+
+
+
+    @Override
+    public byte[] toRaw() {
+        return new byte[0];
     }
 }
