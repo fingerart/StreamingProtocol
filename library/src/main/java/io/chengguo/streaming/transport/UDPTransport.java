@@ -1,6 +1,6 @@
 package io.chengguo.streaming.transport;
 
-import io.chengguo.streaming.rtcp.IReport;
+import io.chengguo.streaming.rtcp.IPacket;
 import io.chengguo.streaming.rtp.RtpPacket;
 import io.chengguo.streaming.rtsp.IMessage;
 import io.chengguo.streaming.rtsp.IResolver;
@@ -52,7 +52,7 @@ public class UDPTransport implements ITransport {
     }
 
     @Override
-    public void setRtcpResolver(IResolver<Integer, IReport> rtcpResolver) {
+    public void setRtcpResolver(IResolver<Integer, IPacket> rtcpResolver) {
 
     }
 
@@ -67,7 +67,7 @@ public class UDPTransport implements ITransport {
     }
 
     @Override
-    public IResolver<Integer, IReport> getRtcpResolver() {
+    public IResolver<Integer, IPacket> getRtcpResolver() {
         return null;
     }
 }

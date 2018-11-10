@@ -14,6 +14,7 @@ import io.chengguo.streaming.rtsp.RTSPSession;
 import io.chengguo.streaming.rtsp.Request;
 import io.chengguo.streaming.rtsp.Response;
 import io.chengguo.streaming.rtsp.header.Header;
+import io.chengguo.streaming.rtsp.header.RangeHeader;
 import io.chengguo.streaming.rtsp.header.TransportHeader;
 import io.chengguo.streaming.transport.TransportMethod;
 
@@ -47,13 +48,13 @@ public class RTSPClient implements ITransportListener {
                     } catch (Exception e) {
                         e.printStackTrace();
                     }
-                    if (nextRequest != null) {
+                    if (nextRequest != null && nextRequest.getLine().getMethod() != null) {
                         session.send(nextRequest);
                     }
                 }
             }
         });
-        session.setRTPCallback(new IResolver.IResolverCallback<RtpPacket>() {
+        session.setRTPResolverCallback(new IResolver.IResolverCallback<RtpPacket>() {
             @Override
             public void onResolve(RtpPacket rtpPacket) {
                 if (mRtpPacketReceiver != null) {
@@ -145,7 +146,9 @@ public class RTSPClient implements ITransportListener {
                         );
                 break;
             case SETUP:
-                builder.method(Method.PLAY).uri(baseUri);
+                builder.method(Method.PLAY)
+                        .addHeader(new RangeHeader(0))
+                        .uri(baseUri);
                 break;
             case PLAY:
             default:
@@ -186,7 +189,7 @@ public class RTSPClient implements ITransportListener {
             return this;
         }
 
-        public Builder setPacketReciver(RTPPacketReceiver rtpPacketReceiver) {
+        public Builder setRTPPacketReciver(RTPPacketReceiver rtpPacketReceiver) {
             this.rtpPacketReceiver = rtpPacketReceiver;
             return this;
         }

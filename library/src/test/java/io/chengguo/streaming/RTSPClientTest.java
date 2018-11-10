@@ -52,14 +52,14 @@ public class RTSPClientTest {
                 }
             }
         });
-        session.setRTCPCallback(new IResolver.IResolverCallback<IReport>() {
+        session.setRTCPResolverCallback(new IResolver.IResolverCallback<IReport>() {
             @Override
             public void onResolve(IReport report) {
                 System.out.println("RTCP report: " + report);
             }
         });
 
-        session.setRTPCallback(new IResolver.IResolverCallback<RtpPacket>() {
+        session.setRTPResolverCallback(new IResolver.IResolverCallback<RtpPacket>() {
             @Override
             public void onResolve(RtpPacket rtpPacket) {
                 System.out.println("RTP packet: " + rtpPacket);

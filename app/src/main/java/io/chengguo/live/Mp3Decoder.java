@@ -15,10 +15,10 @@ import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
 
 @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
-public class Decoder {
+public class Mp3Decoder {
 
     private static final int TIMEOUT = -1;
-    private static final String TAG = "Decoder";
+    private static final String TAG = "Mp3Decoder";
     private final ExecutorService executor;
 
     private LinkedBlockingQueue<byte[]> data = new LinkedBlockingQueue<>();
@@ -30,7 +30,7 @@ public class Decoder {
     private Future<?> outputWorker;
     private Future<?> inputWorker;
 
-    public Decoder() throws IOException {
+    public Mp3Decoder() throws IOException {
         mediaCodec = MediaCodec.createDecoderByType(MediaFormat.MIMETYPE_AUDIO_MPEG);
         MediaFormat audioFormat = MediaFormat.createAudioFormat(MediaFormat.MIMETYPE_AUDIO_MPEG, 44100, 2);
         audioFormat.setInteger(MediaFormat.KEY_BIT_RATE, 337);
@@ -92,8 +92,8 @@ public class Decoder {
 //            ByteBuffer inputBuffer = mediaCodec.getInputBuffer(index);
                             ByteBuffer inputBuffer = codecInputBuffers[index];
                             inputBuffer.clear();
-                            inputBuffer.put(take, 4, take.length - 4);
-                            mediaCodec.queueInputBuffer(index, 4, take.length - 4, System.nanoTime(), 0);
+                            inputBuffer.put(take, 0, take.length);
+                            mediaCodec.queueInputBuffer(index, 0, take.length, System.nanoTime(), 0);
                         } else {
                             Log.d(TAG, "input.exit: " + index);
                         }
