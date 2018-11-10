@@ -31,15 +31,16 @@ public class RTSPSession {
     private AtomicInteger sequence = new AtomicInteger();
     private HashMap<Integer, Request> requestList = new HashMap<>();
     private IResolver.IResolverCallback<Response> mRtspResolverCallback;
+    private IResolver.IResolverCallback<RtpPacket> mRtpResolverCallback;
 
     public RTSPSession(String host, int port, TransportMethod method) {
         this.host = host;
         this.port = port;
         this.method = method;
-        setRTSPAndCallback();
+        setCallbacks();
     }
 
-    private void setRTSPAndCallback() {
+    private void setCallbacks() {
         transport = method.createTransport(host, port, 3000);
         transport.setRtspResolver(new RTSPResolver());
         transport.setRtpResolver(new RTPResolver());
@@ -70,34 +71,63 @@ public class RTSPSession {
                 Log.d(TAG, iReport.toString());
             }
         });
+        transport.getRtpResolver().setResolverCallback(new IResolver.IResolverCallback<RtpPacket>() {
+            @Override
+            public void onResolve(RtpPacket rtpPacket) {
+                //回调
+                mRtpResolverCallback.onResolve(rtpPacket);
+            }
+        });
     }
 
     public void connect() {
         transport.connectAsync();
     }
 
+    /**
+     * 设置传输监听器
+     *
+     * @param transportListener
+     */
     public void setTransportListener(ITransportListener transportListener) {
         transport.setTransportListener(transportListener);
     }
 
+    /**
+     * 设置RTSP解析回调
+     *
+     * @param resolverCallback
+     */
     public void setRTSPResolverCallback(IResolver.IResolverCallback<Response> resolverCallback) {
         mRtspResolverCallback = resolverCallback;
     }
 
-    public void setRTPCallback(IResolver.IResolverCallback<RtpPacket> rtpResolverCallback) {
-        IResolver<Integer, RtpPacket> rtpResolver = transport.getRtpResolver();
-        if (rtpResolver != null) {
-            rtpResolver.setResolverCallback(rtpResolverCallback);
-        }
+    /**
+     * 设置RTP解析回调
+     *
+     * @param rtpResolverCallback
+     */
+    public void setRTPResolverCallback(IResolver.IResolverCallback<RtpPacket> rtpResolverCallback) {
+        mRtpResolverCallback = rtpResolverCallback;
     }
 
-    public void setRTCPCallback(IResolver.IResolverCallback<IPacket> rtcpResolverCallback) {
+    /**
+     * 设置RTCP解析回调
+     *
+     * @param rtcpResolverCallback
+     */
+    public void setRTCPResolverCallback(IResolver.IResolverCallback<IPacket> rtcpResolverCallback) {
         IResolver<Integer, IPacket> rtcpResolver = transport.getRtcpResolver();
         if (rtcpResolver != null) {
             rtcpResolver.setResolverCallback(rtcpResolverCallback);
         }
     }
 
+    /**
+     * 发送RTSP请求
+     *
+     * @param request
+     */
     public void send(Request request) {
         int cseq = sequence.incrementAndGet();
         request.addHeader(new CSeqHeader(cseq));
@@ -116,10 +146,18 @@ public class RTSPSession {
         transport.send(request);
     }
 
+    /**
+     * 是否链接
+     *
+     * @return
+     */
     public boolean isConnected() {
         return transport.isConnected();
     }
 
+    /**
+     * 断开链接
+     */
     public void disconnect() {
         if (isConnected()) {
             transport.disconnect();

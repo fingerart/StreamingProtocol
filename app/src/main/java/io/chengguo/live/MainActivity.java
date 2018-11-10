@@ -1,11 +1,11 @@
 package io.chengguo.live;
 
 import android.content.pm.ActivityInfo;
-import android.media.AudioFormat;
-import android.media.AudioManager;
 import android.media.AudioTrack;
 import android.os.Build;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.support.annotation.RequiresApi;
 import android.support.v7.app.AppCompatActivity;
 import android.view.SurfaceHolder;
@@ -18,17 +18,20 @@ import java.net.URI;
 
 import io.chengguo.streaming.RTSPClient;
 import io.chengguo.streaming.rtp.RtpPacket;
+import io.chengguo.streaming.rtsp.Method;
+import io.chengguo.streaming.rtsp.Request;
+import io.chengguo.streaming.rtsp.Response;
 import io.chengguo.streaming.transport.TransportMethod;
 
 @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
-public class MainActivity extends AppCompatActivity implements View.OnClickListener, RTSPClient.RTPPacketReceiver, Decoder.Callback {
+public class MainActivity extends AppCompatActivity implements View.OnClickListener, RTSPClient.RTPPacketReceiver, Mp3Decoder.Callback {
 
     private static final String TAG = "MainActivity";
 
     private SurfaceView mSurfaceView;
     private AudioTrack audioTrack;
-    private Decoder decoder;
     private RTSPClient rtspClient;
+    private H264Decoder h264Decoder;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -42,20 +45,24 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         findViewById(R.id.btn_stop).setOnClickListener(this);
 
         try {
-            int minBufferSize = AudioTrack.getMinBufferSize(44100, AudioFormat.CHANNEL_IN_STEREO, AudioFormat.ENCODING_PCM_16BIT);
-            audioTrack = new AudioTrack(AudioManager.STREAM_MUSIC, 44100, AudioFormat.CHANNEL_IN_STEREO, AudioFormat.ENCODING_PCM_16BIT, minBufferSize, AudioTrack.MODE_STREAM);
-            decoder = new Decoder();
-            decoder.setCallback(this);
-        } catch (IOException e) {
+//            int minBufferSize = AudioTrack.getMinBufferSize(44100, AudioFormat.CHANNEL_IN_STEREO, AudioFormat.ENCODING_PCM_16BIT);
+//            audioTrack = new AudioTrack(AudioManager.STREAM_MUSIC, 44100, AudioFormat.CHANNEL_IN_STEREO, AudioFormat.ENCODING_PCM_16BIT, minBufferSize, AudioTrack.MODE_STREAM);
+        } catch (Exception e) {
             e.printStackTrace();
         }
 
         mSurfaceView.getHolder().addCallback(new SurfaceHolder.Callback() {
             @Override
             public void surfaceCreated(SurfaceHolder holder) {
-                decoder.start();
-                audioTrack.play();
-                //初始化实时流解码器
+//                mp3Decoder.start();
+//                audioTrack.play();
+
+                try {
+                    h264Decoder = new H264Decoder(holder.getSurface(), 192, 144);
+                    h264Decoder.start();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
             }
 
             @Override
@@ -74,10 +81,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     protected void onResume() {
         super.onResume();
         rtspClient = RTSPClient.create()
-                .host("14.29.172.223")
+                .host("192.168.1.4")
                 .port(554)
                 .transport(TransportMethod.TCP)
-                .setPacketReciver(this).build();
+                .setRTPPacketReciver(this)
+                .build();
         rtspClient.connect();
     }
 
@@ -91,7 +99,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     public void onClick(View v) {
         switch (v.getId()) {
             case R.id.btn_start:
-                rtspClient.play(URI.create("rtsp://172.17.0.2/NeverPlay.mp3"));
+                rtspClient.play(URI.create("rtsp://172.17.0.2/bipbop-gear1-all.264"));
                 break;
             case R.id.btn_stop:
                 rtspClient.pause();
@@ -102,7 +110,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     @Override
     public void onReceive(RtpPacket rtpPacket) {
         try {
-            decoder.input(rtpPacket.getPayload(), 0, rtpPacket.getPayload().length, rtpPacket.getTimestamp());
+//            mp3Decoder.input(rtpPacket.getPayload(), 0, rtpPacket.getPayload().length, rtpPacket.getTimestamp());
+            h264Decoder.input(rtpPacket.getPayload(), 0, rtpPacket.getPayload().length, rtpPacket.getTimestamp());
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -110,6 +119,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     @Override
     public void onOutput(byte[] bytes, int offset, int size) {
-        audioTrack.write(bytes, offset, size);
+//        audioTrack.write(bytes, offset, size);
     }
 }
