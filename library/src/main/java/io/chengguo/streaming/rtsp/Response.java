@@ -143,7 +143,7 @@ public class Response implements IMessage {
     }
 
     public static class Body {
-        private StringBuilder content = new StringBuilder();
+        protected StringBuilder content = new StringBuilder();
 
         public void append(String sLine) {
             content.append(sLine).append("\r\n");
