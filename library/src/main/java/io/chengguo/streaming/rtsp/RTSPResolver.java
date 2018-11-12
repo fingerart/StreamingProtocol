@@ -79,11 +79,11 @@ class RTSPResolver implements IResolver<Integer, Response> {
 
         // TODO: 2018/9/26 解析 SDP
         public void resolve(String sLine) {
-            if ((currentStep & STEP_LINE) != 0 && sLine.startsWith(Version.PROTOCOL)) {
+            if ((currentStep & STEP_LINE) != 0 && sLine.startsWith(Version.PROTOCOL)) {//Line
                 Response.Line line = Response.Line.parse(sLine);
                 response.setLine(line);
                 currentStep = STEP_HEADER;
-            } else if ((currentStep & STEP_HEADER) != 0) {
+            } else if ((currentStep & STEP_HEADER) != 0) {//Headers
                 if (sLine.length() == 0) {
                     int contentLength = response.getContentLength();
                     if (contentLength > 0) {
@@ -94,7 +94,7 @@ class RTSPResolver implements IResolver<Integer, Response> {
                 } else {
                     resolveHeader(sLine);
                 }
-            } else if ((currentStep & STEP_BODY) != 0) {
+            } else if ((currentStep & STEP_BODY) != 0) {//Body
                 response.appendBody(sLine);
                 int bodyLength = response.getBody().getLength();
                 int contentLength = response.getContentLength();
