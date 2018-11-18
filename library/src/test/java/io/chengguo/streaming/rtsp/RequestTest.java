@@ -3,7 +3,12 @@ package io.chengguo.streaming.rtsp;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.lang.reflect.Array;
 import java.net.URI;
+import java.nio.ByteBuffer;
+import java.util.Arrays;
+
+import io.chengguo.streaming.utils.Bits;
 
 /**
  * Created by fingerart on 2018-07-17.
@@ -25,5 +30,15 @@ public class RequestTest {
         System.out.println(value);
 
         System.out.println("result[" + key + ": " + value + "]");
+    }
+
+    @Test
+    public void dba() {
+        ByteBuffer buffer = ByteBuffer.wrap(new byte[]{1, 2, 3, 4, 5});
+        buffer.get();
+        buffer.get();
+        byte[] bytes = new byte[buffer.remaining()];
+        System.arraycopy(buffer.array(), buffer.position(), bytes, 0, buffer.remaining());
+        System.out.println(Arrays.toString(bytes));
     }
 }
