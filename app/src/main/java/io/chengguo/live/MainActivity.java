@@ -4,8 +4,6 @@ import android.content.pm.ActivityInfo;
 import android.media.AudioTrack;
 import android.os.Build;
 import android.os.Bundle;
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
 import android.support.annotation.RequiresApi;
 import android.support.v7.app.AppCompatActivity;
 import android.view.SurfaceHolder;
@@ -13,14 +11,11 @@ import android.view.SurfaceView;
 import android.view.View;
 import android.view.WindowManager;
 
-import java.io.IOException;
 import java.net.URI;
 
 import io.chengguo.streaming.RTSPClient;
+import io.chengguo.streaming.codec.H264Decoder;
 import io.chengguo.streaming.rtp.RtpPacket;
-import io.chengguo.streaming.rtsp.Method;
-import io.chengguo.streaming.rtsp.Request;
-import io.chengguo.streaming.rtsp.Response;
 import io.chengguo.streaming.transport.TransportMethod;
 
 @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
@@ -50,7 +45,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         } catch (Exception e) {
             e.printStackTrace();
         }
-
         mSurfaceView.getHolder().addCallback(new SurfaceHolder.Callback() {
             @Override
             public void surfaceCreated(SurfaceHolder holder) {
@@ -59,7 +53,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
                 try {
                     h264Decoder = new H264Decoder(holder.getSurface(), 192, 144);
-                    h264Decoder.start();
                 } catch (Exception e) {
                     e.printStackTrace();
                 }

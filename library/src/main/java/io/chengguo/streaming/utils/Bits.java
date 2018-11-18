@@ -58,4 +58,12 @@ public class Bits {
         result[7] = (byte) (l & 0xFF);
         return result;
     }
+
+    public static String dumpByteArray(byte[] bytes) {
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < bytes.length; i++) {
+            sb.append(bytes[i] & 0xFF).append(" ");
+        }
+        return sb.toString();
+    }
 }

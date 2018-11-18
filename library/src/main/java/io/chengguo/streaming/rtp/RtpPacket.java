@@ -119,7 +119,9 @@ public class RtpPacket {
                     rtpPacket.csrcs[i] = getLongByInt(buffer);
                 }
             }
-            rtpPacket.payload = buffer.slice().array();
+            byte[] payload = new byte[buffer.remaining()];
+            System.arraycopy(buffer.array(), buffer.position(), payload, 0, buffer.remaining());
+            rtpPacket.payload = payload;
             return rtpPacket;
         }
     }

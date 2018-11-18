@@ -25,4 +25,8 @@ public class Utils {
     public static boolean isEmpty(String string) {
         return string == null || string.length() == 0;
     }
+
+    public static boolean isEmpty(byte[] bytes) {
+        return bytes == null || bytes.length == 0;
+    }
 }
