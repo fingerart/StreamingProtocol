@@ -17,11 +17,14 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
 
+import io.chengguo.streaming.exceptions.NotSupportException;
+
 @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
 public class H264Decoder {
 
     private static final String TAG = "H264Decoder";
     private static final byte[] START_CODE = new byte[]{0, 0, 0, 1};
+    private static final byte[] START_CODE_SLICE = new byte[]{0, 0, 1};
     private final MediaFormat videoFormat;
     private final DataOutputStream file;
     private Surface mSurface;
@@ -58,7 +61,6 @@ public class H264Decoder {
 
             @Override
             public void run() {
-                int index;
                 try {
                     while (decoding) {
                         Log.d(TAG, "input.take...");
@@ -66,28 +68,20 @@ public class H264Decoder {
                         Log.d(TAG, "input.dequeue...");
                         //handle h264
 
-                        byte type = (byte) (take[0] & 0x1F);
+                        byte type = getNALUType(take[0]);
 
                         Log.d(TAG, "First Type: " + type);
 
-                        byte[] frame = new byte[0];
-                        if (type > 0 && type < 24) {//单包
-                            Log.d(TAG, "单包");
-                            frame = new byte[4 + take.length];
-                            System.arraycopy(START_CODE, 0, frame, 0, 4);
-                            System.arraycopy(take, 0, frame, 4, take.length);
+                        if (type > 0 && type < 24) {
+                            handNALU(type, take);
                         } else if (type == 24) {//STAP-A 单一时间聚合包
-                            Log.d(TAG, "STAP-A 单一时间聚合包");
-                            continue;
+                            throw new NotSupportException("STAP-A 单一时间聚合包");
                         } else if (type == 25) {//STAP-B 单一时间聚合包
-                            Log.d(TAG, "STAP-B 单一时间聚合包");
-                            continue;
+                            throw new NotSupportException("STAP-B 单一时间聚合包");
                         } else if (type == 26) {//MTAP16 多时间聚合包
-                            Log.d(TAG, "MTAP16 多时间聚合包");
-                            continue;
+                            throw new NotSupportException("MTAP16 多时间聚合包");
                         } else if (type == 27) {//MTAP24 多时间聚合包
-                            Log.d(TAG, "MTAP24 多时间聚合包");
-                            continue;
+                            throw new NotSupportException("MTAP24 多时间聚合包");
                         } else if (type == 28) {//FU-A 分片包
                             Log.d(TAG, "FU-A 分片包");
                             int fuHeader = take[1] & 0xFF;
@@ -100,10 +94,9 @@ public class H264Decoder {
                                 byte naluType = (byte) (fuHeader & 0x1f);
                                 byte naluHeader = (byte) (fuIndicator & 0xE0 | naluType);
 
-                                fuFrame = new byte[4 + 1 + (take.length - 2)];//start code + header + payload
-                                System.arraycopy(START_CODE, 0, fuFrame, 0, 4);
-                                fuFrame[4] = naluHeader;
-                                System.arraycopy(take, 2, fuFrame, 5, take.length - 2);
+                                fuFrame = new byte[1 + (take.length - 2)];//start code + header + payload
+                                fuFrame[0] = naluHeader;
+                                System.arraycopy(take, 2, fuFrame, 1, take.length - 2);
                                 continue;
                             } else {//分片的最后一个包 或者 中间包
                                 byte[] _frame = new byte[fuFrame.length + (take.length - 2)];
@@ -113,39 +106,21 @@ public class H264Decoder {
                                     Log.d(TAG, "FU-A 中间包");
                                     fuFrame = _frame;
                                     continue;
-                                } else {//最后一个包 送进解码器
+                                } else {//最后一个包
                                     Log.d(TAG, "FU-A 最后一个包");
-                                    frame = _frame;
+                                    handNALU(getNALUType(_frame[0]), _frame);
                                     fuFrame = new byte[0];
                                 }
                             }
                         } else if (type == 29) {//FU-B 分片包
-                            Log.d(TAG, "FU-B 分片包");
-                            continue;
+                            throw new NotSupportException("FU-B 分片包");
                         } else {
-                            Log.w(TAG, "NALU header flag `type`(" + type + ") is invalid.");
-                            continue;
-                        }
-
-                        try {
-                            Log.d(TAG, "write file");
-                            file.write(frame);
-                        } catch (IOException e) {
-                            e.printStackTrace();
-                        }
-
-                        if (((index = mediaCodec.dequeueInputBuffer(10)) >= 0)) {
-                            Log.d(TAG, "input.dequeue [" + index + "] " + Arrays.toString(frame));
-                            ByteBuffer inputBuffer = codecInputBuffers[index];
-                            inputBuffer.clear();
-                            inputBuffer.put(frame, 0, frame.length);
-                            mediaCodec.queueInputBuffer(index, 0, take.length, System.nanoTime(), 0);
-                        } else {
-                            Log.d(TAG, "input.exit: " + index);
+                            throw new NotSupportException("NALU header flag `type`(" + type + ") is invalid.");
                         }
                     }
                 } catch (InterruptedException e) {
                     e.printStackTrace();
+                    stop();
                 }
             }
         });
@@ -174,6 +149,71 @@ public class H264Decoder {
         });
     }
 
+    /**
+     * 获取数据中的type
+     *
+     * @param take
+     * @return
+     */
+    private byte getNALUType(byte take) {
+        return (byte) (take & 0x1F);
+    }
+
+    private byte[] sliceCache = new byte[0];
+
+    /**
+     * 处理NALU
+     *
+     * @param type
+     * @param data
+     */
+    private void handNALU(int type, byte[] data) {
+        if (type >= 1 && type <= 6) {//把这些Slice存起来
+            byte[] slice = new byte[sliceCache.length + START_CODE_SLICE.length + data.length];
+            System.arraycopy(sliceCache, 0, slice, 0, sliceCache.length);
+            System.arraycopy(START_CODE_SLICE, 0, slice, sliceCache.length, START_CODE_SLICE.length);
+            System.arraycopy(data, 0, slice, sliceCache.length + START_CODE_SLICE.length, data.length);
+            sliceCache = slice;
+        } else if (type == 9) {//分隔符，将存储的Slice送入解码器
+            intoDecoder(sliceCache);
+            sliceCache = new byte[0];
+        }
+
+        if (type >= 7 && type < 24) {//单包
+            Log.d(TAG, "单包");
+            byte[] frame = new byte[4 + data.length];
+            System.arraycopy(START_CODE, 0, frame, 0, 4);
+            System.arraycopy(data, 0, frame, 4, data.length);
+            intoDecoder(frame);
+        }
+    }
+
+    /**
+     * 送入解码器
+     *
+     * @param frame
+     */
+    private void intoDecoder(byte[] frame) {
+        int index;
+        if (((index = mediaCodec.dequeueInputBuffer(10)) >= 0)) {
+            Log.d(TAG, "input.dequeue [" + index + "] " + Arrays.toString(frame));
+
+            try {
+                Log.d(TAG, "write file");
+                file.write(frame);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+            ByteBuffer inputBuffer = codecInputBuffers[index];
+            inputBuffer.clear();
+            inputBuffer.put(frame, 0, frame.length);
+            mediaCodec.queueInputBuffer(index, 0, frame.length, System.nanoTime(), 0);
+        } else {
+            Log.d(TAG, "input.exit: " + index);
+        }
+    }
+
     public void stop() {
         decoding = false;
         try {
@@ -198,9 +238,9 @@ public class H264Decoder {
         }
     }
 
-    public void input(final byte[] data, final int offset, final int length, final long presentationTimeUs) throws Exception {
+    public void input(byte[] data, final long presentationTimeUs, boolean marker) throws Exception {
         Log.d(TAG, "RTP Payload: " + Arrays.toString(data));
-        
+
         rawRtpPackets.put(data);
         Log.d(TAG, "queue.put: " + rawRtpPackets.size());
 
@@ -223,7 +263,5 @@ public class H264Decoder {
                 startDecode();
             }
         }
-
-
     }
 }
