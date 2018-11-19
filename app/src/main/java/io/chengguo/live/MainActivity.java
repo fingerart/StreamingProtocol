@@ -104,7 +104,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     public void onReceive(RtpPacket rtpPacket) {
         try {
 //            mp3Decoder.input(rtpPacket.getPayload(), 0, rtpPacket.getPayload().length, rtpPacket.getTimestamp());
-            h264Decoder.input(rtpPacket.getPayload(), 0, rtpPacket.getPayload().length, rtpPacket.getTimestamp());
+            h264Decoder.input(rtpPacket.getPayload(), rtpPacket.getTimestamp(), rtpPacket.isMarker());
         } catch (Exception e) {
             e.printStackTrace();
         }
