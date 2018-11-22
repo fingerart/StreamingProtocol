@@ -31,6 +31,7 @@ public class SourceDescription implements IPacket {
     private int counter;
     private int pt;
     private int length;
+    private SourceChunk[] sources;
 
     @Override
     public byte[] toRaw() {
