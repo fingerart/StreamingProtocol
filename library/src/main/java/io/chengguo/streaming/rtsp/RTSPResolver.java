@@ -1,11 +1,8 @@
 package io.chengguo.streaming.rtsp;
 
-import java.io.BufferedReader;
 import java.io.DataInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.UnsupportedEncodingException;
 
 import io.chengguo.streaming.rtsp.header.CSeqHeader;
 import io.chengguo.streaming.rtsp.header.ContentLengthHeader;
@@ -17,7 +14,7 @@ import io.chengguo.streaming.rtsp.header.TransportHeader;
  * RTSP解析器
  * Created by fingerart on 2018-09-09.
  */
-class RTSPResolver implements IResolver<Integer, Response> {
+class RTSPResolver implements IResolver<Integer, IResolver.IResolverCallback<Response>> {
 
     private IResolverCallback<Response> resolverCallback;
     private DataInputStream reader;
@@ -49,7 +46,7 @@ class RTSPResolver implements IResolver<Integer, Response> {
     }
 
     @Override
-    public void setResolverCallback(IResolverCallback<Response> resolverCallback) {
+    public void setResolverListener(IResolverCallback<Response> resolverCallback) {
         this.resolverCallback = resolverCallback;
     }
 
@@ -64,9 +61,21 @@ class RTSPResolver implements IResolver<Integer, Response> {
      */
     public static class ResolverByLine {
 
+        /**
+         * 步骤-响应行
+         */
         private static final int STEP_LINE = 1 << 0;
+        /**
+         * 步骤-响应头
+         */
         private static final int STEP_HEADER = 1 << 2;
+        /**
+         * 步骤-响应体
+         */
         private static final int STEP_BODY = 1 << 3;
+        /**
+         * 步骤-完成
+         */
         private static final int STEP_COMPLETED = 1 << 4;
 
         private int currentStep = STEP_LINE;
@@ -78,6 +87,12 @@ class RTSPResolver implements IResolver<Integer, Response> {
         }
 
         // TODO: 2018/9/26 解析 SDP
+
+        /**
+         * 一行行解析
+         *
+         * @param sLine
+         */
         public void resolve(String sLine) {
             if ((currentStep & STEP_LINE) != 0 && sLine.startsWith(Version.PROTOCOL)) {//Line
                 Response.Line line = Response.Line.parse(sLine);

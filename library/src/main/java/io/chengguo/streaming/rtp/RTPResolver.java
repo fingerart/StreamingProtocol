@@ -11,7 +11,7 @@ import io.chengguo.streaming.rtsp.IResolver;
  * RTP解析器
  * Created by fingerart on 2018-09-13.
  */
-public class RTPResolver implements IResolver<Integer, RtpPacket> {
+public class RTPResolver implements IResolver<Integer, IResolver.IResolverCallback<RtpPacket>> {
 
     private DataInputStream inputStream;
     private IResolverCallback<RtpPacket> resolverCallback;
@@ -33,7 +33,7 @@ public class RTPResolver implements IResolver<Integer, RtpPacket> {
     }
 
     @Override
-    public void setResolverCallback(IResolverCallback<RtpPacket> resolverCallback) {
+    public void setResolverListener(IResolverCallback<RtpPacket> resolverCallback) {
         this.resolverCallback = resolverCallback;
     }
 
