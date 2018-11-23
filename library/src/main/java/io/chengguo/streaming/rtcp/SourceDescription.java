@@ -40,7 +40,7 @@ public class SourceDescription implements IPacket {
 
     public static class Resolver {
 
-        public static IPacket resolve(ByteBuffer buffer) {
+        public static SourceDescription resolve(ByteBuffer buffer) {
             SourceDescription sourceDescription = new SourceDescription();
             byte vpc = buffer.get();
 

@@ -11,10 +11,10 @@ import io.chengguo.streaming.utils.L;
 /**
  *
  */
-public class RTCPResolver implements IResolver<Integer, IPacket> {
+public class RTCPResolver implements IResolver<Integer, RTCPResolver.RTCPResolverListener> {
 
     private DataInputStream inputStream;
-    private IResolverCallback<IPacket> resolverCallback;
+    private RTCPResolverListener rtcpResolverListener;
 
     @Override
     public void regist(InputStream inputStream) {
@@ -29,31 +29,37 @@ public class RTCPResolver implements IResolver<Integer, IPacket> {
         byte pt = buffer.get(1);//8bit
         short length = buffer.getShort(2);//16bit
         L.d("RTCPResolver#resolve [pt=" + ((int) pt & 0xff) + ", length=" + length + "]");
-        if (resolverCallback != null) {
-            IPacket report = null;
+        if (rtcpResolverListener != null) {
             switch (pt) {
                 case SourceDescription.PACKET_TYPE:
-                    report = SourceDescription.Resolver.resolve(buffer);
+                    rtcpResolverListener.onSourceDescription(SourceDescription.Resolver.resolve(buffer));
                     break;
                 case SenderReport.PACKET_TYPE:
-                    report = SenderReport.Resolver.resolve(buffer);
+                    rtcpResolverListener.onSenderReport(SenderReport.Resolver.resolve(buffer));
                     break;
                 case ReceiverReport.PACKET_TYPE:
-                    report = ReceiverReport.Resolver.resolve(buffer);
+                    rtcpResolverListener.onReceiverReport(ReceiverReport.Resolver.resolve(buffer));
                     break;
             }
-            resolverCallback.onResolve(report);
         }
     }
 
     @Override
-    public void setResolverCallback(IResolverCallback<IPacket> resolverCallback) {
-        this.resolverCallback = resolverCallback;
+    public void setResolverListener(RTCPResolverListener rtcpResolverListener) {
+        this.rtcpResolverListener = rtcpResolverListener;
     }
 
     @Override
     public void release() {
         inputStream = null;
-        resolverCallback = null;
+        rtcpResolverListener = null;
+    }
+
+    public interface RTCPResolverListener {
+        void onSenderReport(SenderReport senderReport);
+
+        void onReceiverReport(ReceiverReport receiverReport);
+
+        void onSourceDescription(SourceDescription sourceDescription);
     }
 }

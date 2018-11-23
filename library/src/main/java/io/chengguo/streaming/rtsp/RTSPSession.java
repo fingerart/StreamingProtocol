@@ -1,12 +1,12 @@
 package io.chengguo.streaming.rtsp;
 
-import android.util.Log;
-
 import java.util.HashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import io.chengguo.streaming.rtcp.IPacket;
 import io.chengguo.streaming.rtcp.RTCPResolver;
+import io.chengguo.streaming.rtcp.ReceiverReport;
+import io.chengguo.streaming.rtcp.SenderReport;
+import io.chengguo.streaming.rtcp.SourceDescription;
 import io.chengguo.streaming.rtp.RTPResolver;
 import io.chengguo.streaming.rtp.RtpPacket;
 import io.chengguo.streaming.rtsp.header.CSeqHeader;
@@ -45,7 +45,7 @@ public class RTSPSession {
         transport.setRtspResolver(new RTSPResolver());
         transport.setRtpResolver(new RTPResolver());
         transport.setRtcpResolver(new RTCPResolver());
-        transport.getRtspResolver().setResolverCallback(new IResolver.IResolverCallback<Response>() {
+        transport.getRtspResolver().setResolverListener(new IResolver.IResolverCallback<Response>() {
             @Override
             public void onResolve(Response response) {
                 //获取暂存中的Request
@@ -65,17 +65,25 @@ public class RTSPSession {
                 }
             }
         });
-        transport.getRtcpResolver().setResolverCallback(new IResolver.IResolverCallback<IPacket>() {
-            @Override
-            public void onResolve(IPacket iReport) {
-                Log.d(TAG, iReport.toString());
-            }
-        });
-        transport.getRtpResolver().setResolverCallback(new IResolver.IResolverCallback<RtpPacket>() {
+        transport.getRtpResolver().setResolverListener(new IResolver.IResolverCallback<RtpPacket>() {
             @Override
             public void onResolve(RtpPacket rtpPacket) {
-                //回调
                 mRtpResolverCallback.onResolve(rtpPacket);
+            }
+        });
+        transport.getRtcpResolver().setResolverListener(new RTCPResolver.RTCPResolverListener() {
+            @Override
+            public void onSenderReport(SenderReport senderReport) {
+
+            }
+
+            @Override
+            public void onReceiverReport(ReceiverReport receiverReport) {
+            }
+
+            @Override
+            public void onSourceDescription(SourceDescription sourceDescription) {
+
             }
         });
     }
@@ -112,18 +120,6 @@ public class RTSPSession {
     }
 
     /**
-     * 设置RTCP解析回调
-     *
-     * @param rtcpResolverCallback
-     */
-    public void setRTCPResolverCallback(IResolver.IResolverCallback<IPacket> rtcpResolverCallback) {
-        IResolver<Integer, IPacket> rtcpResolver = transport.getRtcpResolver();
-        if (rtcpResolver != null) {
-            rtcpResolver.setResolverCallback(rtcpResolverCallback);
-        }
-    }
-
-    /**
      * 发送RTSP请求
      *
      * @param request
@@ -144,6 +140,15 @@ public class RTSPSession {
         requestList.put(cseq, request);
         //发送请求
         transport.send(request);
+    }
+
+    /**
+     * 发送接收端报告
+     *
+     * @param report
+     */
+    public void send(ReceiverReport report) {
+        transport.send(report);
     }
 
     /**

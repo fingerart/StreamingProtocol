@@ -1,6 +1,7 @@
 package io.chengguo.streaming.transport;
 
 import io.chengguo.streaming.rtcp.IPacket;
+import io.chengguo.streaming.rtcp.RTCPResolver;
 import io.chengguo.streaming.rtp.RtpPacket;
 import io.chengguo.streaming.rtsp.IMessage;
 import io.chengguo.streaming.rtsp.IResolver;
@@ -24,15 +25,15 @@ public interface ITransport {
 
     void send(IMessage message);
 
-    void setRtspResolver(IResolver<Integer, Response> rtspResolver);
+    void setRtspResolver(IResolver<Integer, IResolver.IResolverCallback<Response>> rtspResolver);
 
-    void setRtpResolver(IResolver<Integer, RtpPacket> rtpResolver);
+    void setRtpResolver(IResolver<Integer, IResolver.IResolverCallback<RtpPacket>> rtpResolver);
 
-    void setRtcpResolver(IResolver<Integer, IPacket> rtcpResolver);
+    void setRtcpResolver(IResolver<Integer, RTCPResolver.RTCPResolverListener> rtcpResolver);
 
-    IResolver<Integer, Response> getRtspResolver();
+    IResolver<Integer, IResolver.IResolverCallback<Response>> getRtspResolver();
 
-    IResolver<Integer, RtpPacket> getRtpResolver();
+    IResolver<Integer, IResolver.IResolverCallback<RtpPacket>> getRtpResolver();
 
-    IResolver<Integer, IPacket> getRtcpResolver();
+    IResolver<Integer, RTCPResolver.RTCPResolverListener> getRtcpResolver();
 }
