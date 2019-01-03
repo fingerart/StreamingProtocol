@@ -4,6 +4,7 @@ import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 
+import io.chengguo.streaming.rtsp.IMessage;
 import io.chengguo.streaming.utils.Bits;
 
 //@formatter:off
@@ -37,7 +38,7 @@ import io.chengguo.streaming.utils.Bits;
 /**
  * 接受端报告
  */
-public class ReceiverReport implements IPacket {
+public class ReceiverReport implements IPacket, IMessage {
     public static final byte PACKET_TYPE = (byte) 201;
 
     private int version;//2bit
@@ -117,7 +118,7 @@ public class ReceiverReport implements IPacket {
 
     public static class Resolver {
 
-        public static IPacket resolve(ByteBuffer buffer) {
+        public static ReceiverReport resolve(ByteBuffer buffer) {
             ReceiverReport receiverReport = new ReceiverReport();
             return receiverReport;
         }
