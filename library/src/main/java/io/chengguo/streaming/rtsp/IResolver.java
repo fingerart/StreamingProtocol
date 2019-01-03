@@ -7,7 +7,7 @@ import java.io.InputStream;
  * 解析器
  * Created by fingerart on 2018-09-09.
  */
-public interface IResolver<T, Result> {
+public interface IResolver<T, Listener> {
 
     /**
      * 告诉解析器目标InputStream
@@ -24,9 +24,9 @@ public interface IResolver<T, Result> {
     /**
      * 设置回调
      *
-     * @param resolverCallback
+     * @param listener
      */
-    void setResolverCallback(IResolverCallback<Result> resolverCallback);
+    void setResolverListener(Listener listener);
 
     /**
      * 释放资源

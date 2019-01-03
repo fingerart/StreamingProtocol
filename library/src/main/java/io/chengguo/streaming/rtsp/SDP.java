@@ -45,8 +45,6 @@ public class SDP extends Response.Body {
 
     /**
      * Session Attribute (a): x-qt-text-inf
-     *
-     * @param sLine
      */
     private String xQtTextInf;
 

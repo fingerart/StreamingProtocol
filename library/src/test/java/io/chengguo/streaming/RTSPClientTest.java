@@ -52,7 +52,7 @@ public class RTSPClientTest {
                 }
             }
         });
-        session.setRTCPResolverCallback(new IResolver.IResolverCallback<IPacket>() {
+        session.setRTCPResolverListener(new IResolver.IResolverCallback<IPacket>() {
             @Override
             public void onResolve(IPacket report) {
                 System.out.println("RTCP report: " + report);

@@ -2,6 +2,8 @@ package io.chengguo.streaming.rtcp;
 
 import java.nio.ByteBuffer;
 
+import io.chengguo.streaming.exceptions.NotSupportException;
+
 import static io.chengguo.streaming.utils.Bits.getLongByInt;
 
 //@formatter:off
@@ -81,12 +83,12 @@ public class SenderReport implements IPacket {
 
     @Override
     public byte[] toRaw() {
-        return new byte[0];
+        throw new RuntimeException();
     }
 
     public static class Resolver {
 
-        public static IPacket resolve(ByteBuffer buffer) {
+        public static SenderReport resolve(ByteBuffer buffer) {
             SenderReport senderReport = new SenderReport();
             byte vpc = buffer.get();
             senderReport.version = vpc >> 6 & 0x3;

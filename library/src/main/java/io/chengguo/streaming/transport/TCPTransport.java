@@ -9,7 +9,7 @@ import java.net.Socket;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-import io.chengguo.streaming.rtcp.IPacket;
+import io.chengguo.streaming.rtcp.RTCPResolver;
 import io.chengguo.streaming.rtp.RtpPacket;
 import io.chengguo.streaming.rtsp.IMessage;
 import io.chengguo.streaming.rtsp.IResolver;
@@ -30,9 +30,9 @@ public class TCPTransport implements ITransport {
     private InputStream inputStream;
     private OutputStream outputStream;
     private TransportListenerWrapper transportListener;
-    private IResolver<Integer, Response> mRtspResolver;
-    private IResolver<Integer, RtpPacket> mRtpResolver;
-    private IResolver<Integer, IPacket> mRtcpResolver;
+    private IResolver<Integer, IResolver.IResolverCallback<Response>> mRtspResolver;
+    private IResolver<Integer, IResolver.IResolverCallback<RtpPacket>> mRtpResolver;
+    private IResolver<Integer, RTCPResolver.RTCPResolverListener> mRtcpResolver;
 
     public TCPTransport(String hostname, int port, int timeout) {
         this.timeout = timeout;
@@ -156,7 +156,7 @@ public class TCPTransport implements ITransport {
     }
 
     @Override
-    public void setRtspResolver(IResolver<Integer, Response> resolver) {
+    public void setRtspResolver(IResolver<Integer, IResolver.IResolverCallback<Response>> resolver) {
         //如果存在则释放之前的解析器
         if (mRtspResolver != null) {
             mRtspResolver.release();
@@ -165,7 +165,7 @@ public class TCPTransport implements ITransport {
     }
 
     @Override
-    public void setRtpResolver(IResolver<Integer, RtpPacket> resolver) {
+    public void setRtpResolver(IResolver<Integer, IResolver.IResolverCallback<RtpPacket>> resolver) {
         if (mRtpResolver != null) {
             mRtpResolver.release();
         }
@@ -173,7 +173,7 @@ public class TCPTransport implements ITransport {
     }
 
     @Override
-    public void setRtcpResolver(IResolver<Integer, IPacket> rtcpResolver) {
+    public void setRtcpResolver(IResolver<Integer, RTCPResolver.RTCPResolverListener> rtcpResolver) {
         if (mRtcpResolver != null) {
             mRtcpResolver.release();
         }
@@ -181,17 +181,17 @@ public class TCPTransport implements ITransport {
     }
 
     @Override
-    public IResolver<Integer, Response> getRtspResolver() {
+    public IResolver<Integer, IResolver.IResolverCallback<Response>> getRtspResolver() {
         return mRtspResolver;
     }
 
     @Override
-    public IResolver<Integer, RtpPacket> getRtpResolver() {
+    public IResolver<Integer, IResolver.IResolverCallback<RtpPacket>> getRtpResolver() {
         return mRtpResolver;
     }
 
     @Override
-    public IResolver<Integer, IPacket> getRtcpResolver() {
+    public IResolver<Integer, RTCPResolver.RTCPResolverListener> getRtcpResolver() {
         return mRtcpResolver;
     }
 }
