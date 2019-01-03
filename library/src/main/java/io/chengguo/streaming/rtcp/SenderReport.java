@@ -58,7 +58,7 @@ public class SenderReport implements IPacket {
     private long ntpLsw;
     private long rtpTimestamp;
     private long packetCount;
-    private long octetCount;
+    private long octetCount;//8字节数量
     private ReportBlock[] reportBlocks;
 
     @Override

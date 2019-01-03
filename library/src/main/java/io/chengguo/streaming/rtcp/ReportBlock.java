@@ -24,12 +24,12 @@ package io.chengguo.streaming.rtcp;
 public class ReportBlock {
     public static final int SIZE = 24;//byte
 
-    private long identifier;
-    private int fractionLost;
-    private int numberOfPacketsLost;
-    private long exHighestNumber;//extended highest sequence number received
-    private long interarrivalJitter;
-    private long lastSR;
-    private long delayLastSR;
+    private long identifier;//同步源n的SSRC标识符
+    private int fractionLost;//丢包率
+    private int numberOfPacketsLost;//累计的包丢失数
+    private long exHighestNumber;//扩展最高序列号
+    private long interarrivalJitter;//到达间隔抖动
+    private long lastSR;//最新接收到SR报文的时间戳
+    private long delayLastSR;//接收到SR报文的时刻与发送该RR报文时刻的时间差值
 
 }

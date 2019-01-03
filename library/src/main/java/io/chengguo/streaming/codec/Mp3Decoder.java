@@ -1,4 +1,4 @@
-package io.chengguo.live;
+package io.chengguo.streaming.codec;
 
 import android.media.MediaCodec;
 import android.media.MediaCodecInfo;

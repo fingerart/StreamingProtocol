@@ -17,6 +17,7 @@ import io.chengguo.streaming.transport.TransportMethod;
 import io.chengguo.streaming.utils.Utils;
 
 /**
+ * RTSP session
  * Created by fingerart on 2018-09-08.
  */
 public class RTSPSession {
@@ -69,6 +70,7 @@ public class RTSPSession {
             @Override
             public void onResolve(IPacket iReport) {
                 Log.d(TAG, iReport.toString());
+
             }
         });
         transport.getRtpResolver().setResolverCallback(new IResolver.IResolverCallback<RtpPacket>() {

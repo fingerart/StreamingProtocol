@@ -44,7 +44,7 @@ public class ReceiverReport implements IPacket {
     private boolean padding;//1bit
     private int counter;//
     private int pt;
-    private int length;
+    private int length = 6;
     private long ssrcSender;
     private List<ReportBlock> reportBlocks = new ArrayList<>();
 
@@ -66,10 +66,6 @@ public class ReceiverReport implements IPacket {
 
     public int getCounter() {
         return counter;
-    }
-
-    public void setCounter(int counter) {
-        this.counter = counter;
     }
 
     public int getPt() {
@@ -100,8 +96,10 @@ public class ReceiverReport implements IPacket {
         return reportBlocks;
     }
 
-    public void setReportBlocks(List<ReportBlock> reportBlocks) {
-        this.reportBlocks = reportBlocks;
+    public void addReportBlock(ReportBlock reportBlock) {
+        reportBlocks.add(reportBlock);
+        counter = reportBlocks.size();
+        length += 6;
     }
 
     @Override

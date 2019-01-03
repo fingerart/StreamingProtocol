@@ -15,6 +15,7 @@ import java.net.URI;
 
 import io.chengguo.streaming.RTSPClient;
 import io.chengguo.streaming.codec.H264Decoder;
+import io.chengguo.streaming.codec.Mp3Decoder;
 import io.chengguo.streaming.rtp.RtpPacket;
 import io.chengguo.streaming.transport.TransportMethod;
 
