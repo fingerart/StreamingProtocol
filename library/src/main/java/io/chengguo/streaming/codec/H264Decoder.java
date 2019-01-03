@@ -26,7 +26,6 @@ public class H264Decoder {
     private static final byte[] START_CODE = new byte[]{0, 0, 0, 1};
     private static final byte[] START_CODE_SLICE = new byte[]{0, 0, 1};
     private final MediaFormat videoFormat;
-    private final DataOutputStream file;
     private Surface mSurface;
 
     private LinkedBlockingQueue<byte[]> rawRtpPackets = new LinkedBlockingQueue<>();
@@ -45,7 +44,6 @@ public class H264Decoder {
         videoFormat.setInteger(MediaFormat.KEY_FRAME_RATE, 25);
         videoFormat.setInteger(MediaFormat.KEY_BIT_RATE, 40000);
         videoFormat.setInteger(MediaFormat.KEY_I_FRAME_INTERVAL, 1);
-        file = new DataOutputStream(new FileOutputStream("/sdcard/test.264"));
     }
 
     private void startDecode() throws IOException {
@@ -197,14 +195,6 @@ public class H264Decoder {
         int index;
         if (((index = mediaCodec.dequeueInputBuffer(10)) >= 0)) {
             Log.d(TAG, "input.dequeue [" + index + "] " + Arrays.toString(frame));
-
-            try {
-                Log.d(TAG, "write file");
-                file.write(frame);
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-
             ByteBuffer inputBuffer = codecInputBuffers[index];
             inputBuffer.clear();
             inputBuffer.put(frame, 0, frame.length);
@@ -216,16 +206,6 @@ public class H264Decoder {
 
     public void stop() {
         decoding = false;
-        try {
-            file.flush();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        try {
-            file.close();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
         if (inputWorker != null) {
             inputWorker.cancel(true);
         }
