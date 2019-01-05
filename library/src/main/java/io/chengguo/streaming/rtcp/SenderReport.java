@@ -1,8 +1,11 @@
 package io.chengguo.streaming.rtcp;
 
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
+import java.util.List;
 
 import io.chengguo.streaming.exceptions.NotSupportException;
+import io.chengguo.streaming.utils.Bits;
 
 import static io.chengguo.streaming.utils.Bits.getLongByInt;
 
@@ -59,9 +62,9 @@ public class SenderReport implements IPacket {
     private long ntpMsw;
     private long ntpLsw;
     private long rtpTimestamp;
-    private long packetCount;
+    private long packetCount;//已发送的RTCP包数量
     private long octetCount;//8字节数量
-    private ReportBlock[] reportBlocks;
+    private List<ReportBlock> reportBlocks;
 
     @Override
     public String toString() {
@@ -102,6 +105,22 @@ public class SenderReport implements IPacket {
             senderReport.rtpTimestamp = getLongByInt(buffer);
             senderReport.packetCount = getLongByInt(buffer);
             senderReport.octetCount = getLongByInt(buffer);
+
+            //report block
+            senderReport.reportBlocks = new ArrayList<>();
+            for (int i = 0; i < senderReport.counter; i++) {
+                ReportBlock reportBlock = new ReportBlock();
+                reportBlock.identifier = getLongByInt(buffer);
+                reportBlock.fractionLost = buffer.get() & 0xff;
+                byte[] numberOfPacketsLostArr = new byte[3];
+                buffer.get(numberOfPacketsLostArr);
+                reportBlock.numberOfPacketsLost = Bits.byteArrayToInt(numberOfPacketsLostArr);
+                reportBlock.exHighestNumber = getLongByInt(buffer);
+                reportBlock.interarrivalJitter = getLongByInt(buffer);
+                reportBlock.lastSR = getLongByInt(buffer);
+                reportBlock.delayLastSR = getLongByInt(buffer);
+                senderReport.reportBlocks.add(reportBlock);
+            }
 
             return senderReport;
         }

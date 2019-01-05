@@ -1,5 +1,7 @@
 package io.chengguo.streaming.utils;
 
+import android.support.annotation.IntRange;
+
 import java.nio.ByteBuffer;
 
 public class Bits {
@@ -40,6 +42,36 @@ public class Bits {
     }
 
     /**
+     * int转byte[]
+     *
+     * @param l
+     * @param byteLength 需要转的字节数
+     * @return
+     */
+    public static byte[] intToByteArray(int l, @IntRange(from = 1, to = 4) int byteLength) {
+        byte[] result = new byte[byteLength];
+        for (int i = 0; i < byteLength; i++) {
+            //由高位到低位
+            result[i] = (byte) ((l >> (byteLength - i - 1) * Byte.SIZE) & 0xFF);
+        }
+        return result;
+    }
+
+    /**
+     * byte[] 转 int
+     *
+     * @param arr
+     * @return
+     */
+    public static int byteArrayToInt(byte[] arr) {
+        int result = 0;
+        for (int i = 0; i < arr.length && i < 4; i++) {
+            result |= arr[i] << Byte.SIZE * (3 - i);
+        }
+        return result;
+    }
+
+    /**
      * long 转 byte[]
      *
      * @param l
@@ -56,6 +88,22 @@ public class Bits {
         result[5] = (byte) ((l >> 16) & 0xFF);
         result[6] = (byte) ((l >> 8) & 0xFF);
         result[7] = (byte) (l & 0xFF);
+        return result;
+    }
+
+    /**
+     * long转byte[]
+     *
+     * @param l
+     * @param byteLength 需要转的字节数
+     * @return
+     */
+    public static byte[] longToByteArray(long l, @IntRange(from = 1, to = 8) int byteLength) {
+        byte[] result = new byte[byteLength];
+        for (int i = 0; i < byteLength; i++) {
+            //由高位到低位
+            result[i] = (byte) ((l >> (byteLength - i - 1) * Byte.SIZE) & 0xFF);
+        }
         return result;
     }
 

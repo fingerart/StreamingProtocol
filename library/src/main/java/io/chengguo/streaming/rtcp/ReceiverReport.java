@@ -106,12 +106,12 @@ public class ReceiverReport implements IPacket, IMessage {
     @Override
     public byte[] toRaw() {
         ByteBuffer buffer = ByteBuffer.allocate(8 + (ReportBlock.SIZE * reportBlocks.size()));
-        byte v = (byte) ((((version & 0x3) << 6) | (((padding ? 1 : 0) & 0x1) << 5) | (counter & 0x1f)) & 0xff);
-        buffer.put(v);
+        byte vpc = (byte) ((((version & 0x3) << 6) | (((padding ? 1 : 0) & 0x1) << 5) | (counter & 0x1f)) & 0xff);
+        buffer.put(vpc);
         buffer.put((byte) (pt & 0xff));
         buffer.put(Bits.intToByteArray(length), 2, 2);
         buffer.put(Bits.longToByteArray(ssrcSender), 4, 4);
-        // TODO: 2018/11/6 report block
+//        buffer.put()
 
         return buffer.array();
     }
