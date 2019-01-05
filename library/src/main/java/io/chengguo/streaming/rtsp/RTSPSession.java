@@ -76,10 +76,8 @@ public class RTSPSession {
             @Override
             public void onSenderReport(SenderReport senderReport) {
                 System.out.println(senderReport);
-                ReceiverReport receiverReport = new ReceiverReport();
-
-
-                send(receiverReport);
+                RtspPacket rtspPacket = new RtspPacket(0x01, new IMessage[]{new ReceiverReport(8888)});
+                transport.send(rtspPacket);
             }
 
             @Override
@@ -88,7 +86,7 @@ public class RTSPSession {
 
             @Override
             public void onSourceDescription(SourceDescription sourceDescription) {
-
+                System.out.println(sourceDescription);
             }
         });
     }
@@ -145,15 +143,6 @@ public class RTSPSession {
         requestList.put(cseq, request);
         //发送请求
         transport.send(request);
-    }
-
-    /**
-     * 发送接收端报告
-     *
-     * @param report
-     */
-    public void send(ReceiverReport report) {
-        transport.send(report);
     }
 
     /**

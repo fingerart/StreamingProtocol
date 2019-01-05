@@ -26,6 +26,11 @@ public class RTCPResolver implements IResolver<Integer, RTCPResolver.RTCPResolve
         L.d("RTCP length: " + rtcpLength);
         ByteBuffer buffer = ByteBuffer.allocate(rtcpLength);
         inputStream.readFully(buffer.array());
+
+        resolveSingle(buffer);
+    }
+
+    private void resolveSingle(ByteBuffer buffer) {
         byte pt = buffer.get(1);//8bit
         short length = buffer.getShort(2);//16bit
         L.d("RTCPResolver#resolve [pt=" + ((int) pt & 0xff) + ", length=" + length + "]");
@@ -41,6 +46,12 @@ public class RTCPResolver implements IResolver<Integer, RTCPResolver.RTCPResolve
                     rtcpResolverListener.onReceiverReport(ReceiverReport.Resolver.resolve(buffer));
                     break;
             }
+        }
+        //如果还未读取完，则继续读
+        if (buffer.hasRemaining()) {
+            buffer.compact();
+            buffer.flip();
+            resolveSingle(buffer);
         }
     }
 

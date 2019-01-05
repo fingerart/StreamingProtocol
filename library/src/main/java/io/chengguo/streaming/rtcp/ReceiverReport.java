@@ -41,13 +41,20 @@ import io.chengguo.streaming.utils.Bits;
 public class ReceiverReport implements IPacket, IMessage {
     public static final byte PACKET_TYPE = (byte) 201;
 
-    private int version;//2bit
+    private int version = 2;//2bit
     private boolean padding;//1bit
     private int counter;//
-    private int pt;
-    private int length = 6;
+    private int pt = PACKET_TYPE;
+    private int length = 1;
     private long ssrcSender;
     private List<ReportBlock> reportBlocks = new ArrayList<>();
+
+    public ReceiverReport() {
+    }
+
+    public ReceiverReport(long ssrcSender) {
+        this.ssrcSender = ssrcSender;
+    }
 
     public int getVersion() {
         return version;
@@ -65,36 +72,8 @@ public class ReceiverReport implements IPacket, IMessage {
         this.padding = padding;
     }
 
-    public int getCounter() {
-        return counter;
-    }
-
-    public int getPt() {
-        return pt;
-    }
-
-    public void setPt(int pt) {
-        this.pt = pt;
-    }
-
-    public int getLength() {
-        return length;
-    }
-
-    public void setLength(int length) {
-        this.length = length;
-    }
-
-    public long getSsrcSender() {
-        return ssrcSender;
-    }
-
     public void setSsrcSender(long ssrcSender) {
         this.ssrcSender = ssrcSender;
-    }
-
-    public List<ReportBlock> getReportBlocks() {
-        return reportBlocks;
     }
 
     public void addReportBlock(ReportBlock reportBlock) {
@@ -111,7 +90,11 @@ public class ReceiverReport implements IPacket, IMessage {
         buffer.put((byte) (pt & 0xff));
         buffer.put(Bits.intToByteArray(length), 2, 2);
         buffer.put(Bits.longToByteArray(ssrcSender), 4, 4);
-//        buffer.put()
+
+        //report block
+        for (ReportBlock reportBlock : reportBlocks) {
+            buffer.put(reportBlock.toRaw());
+        }
 
         return buffer.array();
     }
@@ -120,6 +103,16 @@ public class ReceiverReport implements IPacket, IMessage {
 
         public static ReceiverReport resolve(ByteBuffer buffer) {
             ReceiverReport receiverReport = new ReceiverReport();
+            byte vpc = buffer.get();
+            receiverReport.version = vpc >> 6 & 0x3;
+            receiverReport.padding = (vpc >> 5 & 0x1) == 1;
+            receiverReport.counter = vpc & 0x1f;
+            receiverReport.pt = buffer.get() & 0xff;
+            receiverReport.length = buffer.getShort();
+
+            // TODO: 2019/1/6 直接读取暂不处理
+            buffer.get(new byte[receiverReport.length * 32]);
+
             return receiverReport;
         }
     }
