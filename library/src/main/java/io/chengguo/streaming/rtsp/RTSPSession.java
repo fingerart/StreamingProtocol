@@ -75,7 +75,11 @@ public class RTSPSession {
         transport.getRtcpResolver().setResolverListener(new RTCPResolver.RTCPResolverListener() {
             @Override
             public void onSenderReport(SenderReport senderReport) {
+                System.out.println(senderReport);
+                ReceiverReport receiverReport = new ReceiverReport();
 
+
+                send(receiverReport);
             }
 
             @Override
