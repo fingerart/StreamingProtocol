@@ -1,6 +1,5 @@
 package io.chengguo.streaming.transport;
 
-import io.chengguo.streaming.rtcp.IPacket;
 import io.chengguo.streaming.rtcp.RTCPResolver;
 import io.chengguo.streaming.rtp.RtpPacket;
 import io.chengguo.streaming.rtsp.IMessage;

@@ -1,7 +1,7 @@
 package io.chengguo.streaming.utils;
 
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 /**
  * Created by fingerart on 2018-07-15.
