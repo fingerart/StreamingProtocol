@@ -89,9 +89,8 @@ public class SenderReport implements IPacket {
         throw new RuntimeException();
     }
 
-    public static class Resolver {
 
-        public static SenderReport resolve(ByteBuffer buffer) {
+        public static SenderReport of(ByteBuffer buffer) {
             SenderReport senderReport = new SenderReport();
             byte vpc = buffer.get();
             senderReport.version = vpc >> 6 & 0x3;
@@ -124,6 +123,4 @@ public class SenderReport implements IPacket {
 
             return senderReport;
         }
-
-    }
 }

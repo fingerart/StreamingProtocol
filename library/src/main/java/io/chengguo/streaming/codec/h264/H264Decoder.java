@@ -1,8 +1,9 @@
-package io.chengguo.streaming.codec;
+package io.chengguo.streaming.codec.h264;
 
 import android.media.MediaCodec;
 import android.media.MediaFormat;
 import android.os.Build;
+import android.os.Handler;
 import android.support.annotation.RequiresApi;
 import android.util.Log;
 import android.view.Surface;
@@ -17,10 +18,11 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
 
+import io.chengguo.streaming.codec.Decoder;
 import io.chengguo.streaming.exceptions.NotSupportException;
 
 @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
-public class H264Decoder {
+public class H264Decoder extends Decoder {
 
     private static final String TAG = "H264Decoder";
     private static final byte[] START_CODE = new byte[]{0, 0, 0, 1};
@@ -42,8 +44,8 @@ public class H264Decoder {
         executor = Executors.newCachedThreadPool();
         videoFormat = MediaFormat.createVideoFormat(MediaFormat.MIMETYPE_VIDEO_AVC, width, height);
         videoFormat.setInteger(MediaFormat.KEY_FRAME_RATE, 25);
-        videoFormat.setInteger(MediaFormat.KEY_BIT_RATE, 40000);
-        videoFormat.setInteger(MediaFormat.KEY_I_FRAME_INTERVAL, 1);
+        videoFormat.setInteger(MediaFormat.KEY_BIT_RATE, 90000);
+//        videoFormat.setInteger(MediaFormat.KEY_I_FRAME_INTERVAL, 1);
     }
 
     private void startDecode() throws IOException {
@@ -70,7 +72,7 @@ public class H264Decoder {
 
                         Log.d(TAG, "First Type: " + type);
 
-                        if (type > 0 && type < 24) {
+                        if (type > 0 && type < 24) {// 1~23 单个 NAL 单元包
                             handNALU(type, take);
                         } else if (type == 24) {//STAP-A 单一时间聚合包
                             throw new NotSupportException("STAP-A 单一时间聚合包");
@@ -172,7 +174,7 @@ public class H264Decoder {
             System.arraycopy(START_CODE_SLICE, 0, slice, sliceCache.length, START_CODE_SLICE.length);
             System.arraycopy(data, 0, slice, sliceCache.length + START_CODE_SLICE.length, data.length);
             sliceCache = slice;
-        } else if (type == 9) {//分隔符，将存储的Slice送入解码器
+        } else if (type == 9) {//将存储的Slice送入解码器
             intoDecoder(sliceCache);
             sliceCache = new byte[0];
         }
@@ -204,6 +206,12 @@ public class H264Decoder {
         }
     }
 
+    @Override
+    public void start() {
+
+    }
+
+    @Override
     public void stop() {
         decoding = false;
         if (inputWorker != null) {
@@ -221,10 +229,10 @@ public class H264Decoder {
     public void input(byte[] data, final long presentationTimeUs, boolean marker) throws Exception {
         Log.d(TAG, "RTP Payload: " + Arrays.toString(data));
 
-        rawRtpPackets.put(data);
-        Log.d(TAG, "queue.put: " + rawRtpPackets.size());
-
-        if (!decoding) {
+        if (decoding) {
+            rawRtpPackets.put(data);
+            Log.d(TAG, "queue.put: " + rawRtpPackets.size());
+        } else {
             byte type = (byte) (data[0] & 0x1F);
             if (type == 7) {//SPS
                 byte[] sps = new byte[4 + data.length];

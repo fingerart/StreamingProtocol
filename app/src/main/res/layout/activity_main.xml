@@ -7,14 +7,15 @@
 
     <SurfaceView
         android:id="@+id/surface"
-        android:layout_width="192dp"
-        android:layout_height="144dp"
+        android:layout_width="match_parent"
+        android:layout_height="200dp"
         android:layout_gravity="center" />
 
     <LinearLayout
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_gravity="bottom">
+        android:layout_gravity="bottom"
+        android:layout_marginBottom="20dp">
 
         <Button
             android:id="@+id/btn_start"

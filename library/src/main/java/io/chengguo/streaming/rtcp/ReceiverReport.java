@@ -99,9 +99,7 @@ public class ReceiverReport implements IPacket, IMessage {
         return buffer.array();
     }
 
-    public static class Resolver {
-
-        public static ReceiverReport resolve(ByteBuffer buffer) {
+        public static ReceiverReport of(ByteBuffer buffer) {
             ReceiverReport receiverReport = new ReceiverReport();
             byte vpc = buffer.get();
             receiverReport.version = vpc >> 6 & 0x3;
@@ -115,5 +113,4 @@ public class ReceiverReport implements IPacket, IMessage {
 
             return receiverReport;
         }
-    }
 }

@@ -47,6 +47,7 @@ public class RTSPSession {
         transport.setRtpResolver(new RTPResolver());
         transport.setRtcpResolver(new RTCPResolver());
         transport.getRtspResolver().setResolverListener(new IResolver.IResolverCallback<Response>() {
+
             @Override
             public void onResolve(Response response) {
                 //获取暂存中的Request

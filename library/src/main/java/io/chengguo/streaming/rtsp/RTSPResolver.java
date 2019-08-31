@@ -35,6 +35,7 @@ class RTSPResolver implements IResolver<Integer, IResolver.IResolverCallback<Res
                 sLine = Character.toString((char) firstByte.intValue()) + sLine;
                 firstByte = -1;
             }
+            // todo 优化，直接读取剩余的content
             lineResolver.resolve(sLine);
             if (lineResolver.isCompleted()) {
                 if (resolverCallback != null) {
@@ -85,8 +86,6 @@ class RTSPResolver implements IResolver<Integer, IResolver.IResolverCallback<Res
         public ResolverByLine() {
             response = new Response();
         }
-
-        // TODO: 2018/9/26 解析 SDP
 
         /**
          * 一行行解析
