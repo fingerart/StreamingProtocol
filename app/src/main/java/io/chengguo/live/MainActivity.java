@@ -5,7 +5,9 @@ import android.content.pm.ActivityInfo;
 import android.media.AudioTrack;
 import android.os.Build;
 import android.os.Bundle;
-import android.support.annotation.RequiresApi;
+import androidx.annotation.RequiresApi;
+import androidx.appcompat.app.AppCompatActivity;
+
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.View;

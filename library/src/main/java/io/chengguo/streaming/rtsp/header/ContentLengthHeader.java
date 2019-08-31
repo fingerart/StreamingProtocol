@@ -1,6 +1,6 @@
 package io.chengguo.streaming.rtsp.header;
 
-import android.support.annotation.NonNull;
+import androidx.annotation.NonNull;
 
 /**
  * Created by fingerart on 2018-09-12.

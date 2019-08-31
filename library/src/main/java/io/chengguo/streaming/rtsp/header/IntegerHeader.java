@@ -1,6 +1,6 @@
 package io.chengguo.streaming.rtsp.header;
 
-import android.support.annotation.NonNull;
+import androidx.annotation.NonNull;
 
 /**
  * 值为整数的Header

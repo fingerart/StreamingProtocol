@@ -1,10 +1,8 @@
 package io.chengguo.streaming.rtsp;
 
-import android.support.annotation.CheckResult;
-import android.support.annotation.IntRange;
+import androidx.annotation.IntRange;
 
 import java.nio.ByteBuffer;
-import java.util.ArrayList;
 import java.util.Arrays;
 
 import io.chengguo.streaming.utils.Bits;
