@@ -1,11 +1,11 @@
 package io.chengguo.live;
 
+import android.app.Activity;
 import android.content.pm.ActivityInfo;
 import android.media.AudioTrack;
 import android.os.Build;
 import android.os.Bundle;
 import android.support.annotation.RequiresApi;
-import android.support.v7.app.AppCompatActivity;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.View;
@@ -14,13 +14,13 @@ import android.view.WindowManager;
 import java.net.URI;
 
 import io.chengguo.streaming.RTSPClient;
-import io.chengguo.streaming.codec.H264Decoder;
+import io.chengguo.streaming.codec.h264.H264Decoder;
 import io.chengguo.streaming.codec.Mp3Decoder;
 import io.chengguo.streaming.rtp.RtpPacket;
 import io.chengguo.streaming.transport.TransportMethod;
 
 @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
-public class MainActivity extends AppCompatActivity implements View.OnClickListener, RTSPClient.RTPPacketReceiver, Mp3Decoder.Callback {
+public class MainActivity extends Activity implements View.OnClickListener, RTSPClient.RTPPacketReceiver, Mp3Decoder.Callback {
 
     private static final String TAG = "MainActivity";
 
@@ -39,7 +39,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         mSurfaceView = findViewById(R.id.surface);
         findViewById(R.id.btn_start).setOnClickListener(this);
         findViewById(R.id.btn_stop).setOnClickListener(this);
-
         try {
 //            int minBufferSize = AudioTrack.getMinBufferSize(44100, AudioFormat.CHANNEL_IN_STEREO, AudioFormat.ENCODING_PCM_16BIT);
 //            audioTrack = new AudioTrack(AudioManager.STREAM_MUSIC, 44100, AudioFormat.CHANNEL_IN_STEREO, AudioFormat.ENCODING_PCM_16BIT, minBufferSize, AudioTrack.MODE_STREAM);
@@ -53,7 +52,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 //                audioTrack.play();
 
                 try {
-                    h264Decoder = new H264Decoder(holder.getSurface(), 192, 144);
+                    h264Decoder = new H264Decoder(holder.getSurface(), 720, 567);
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
@@ -75,8 +74,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     protected void onResume() {
         super.onResume();
         rtspClient = RTSPClient.create()
-                .host("192.168.1.4")
-                .port(554)
+                .host("192.168.0.100")
                 .transport(TransportMethod.TCP)
                 .setRTPPacketReciver(this)
                 .build();

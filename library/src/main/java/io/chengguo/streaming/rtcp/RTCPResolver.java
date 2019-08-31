@@ -4,6 +4,7 @@ import java.io.DataInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
+import java.nio.MappedByteBuffer;
 
 import io.chengguo.streaming.rtsp.IResolver;
 import io.chengguo.streaming.utils.L;
@@ -40,10 +41,10 @@ public class RTCPResolver implements IResolver<Integer, RTCPResolver.RTCPResolve
                     rtcpResolverListener.onSourceDescription(SourceDescription.Resolver.resolve(buffer));
                     break;
                 case SenderReport.PACKET_TYPE:
-                    rtcpResolverListener.onSenderReport(SenderReport.Resolver.resolve(buffer));
+                    rtcpResolverListener.onSenderReport(SenderReport.of(buffer));
                     break;
                 case ReceiverReport.PACKET_TYPE:
-                    rtcpResolverListener.onReceiverReport(ReceiverReport.Resolver.resolve(buffer));
+                    rtcpResolverListener.onReceiverReport(ReceiverReport.of(buffer));
                     break;
             }
         }
