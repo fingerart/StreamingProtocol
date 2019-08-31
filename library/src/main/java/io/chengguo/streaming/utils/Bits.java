@@ -1,6 +1,6 @@
 package io.chengguo.streaming.utils;
 
-import android.support.annotation.IntRange;
+import androidx.annotation.IntRange;
 
 import java.nio.ByteBuffer;
 

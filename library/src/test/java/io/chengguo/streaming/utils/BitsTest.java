@@ -2,11 +2,6 @@ package io.chengguo.streaming.utils;
 
 import org.junit.Test;
 
-import java.nio.ByteBuffer;
-import java.util.Arrays;
-
-import static org.junit.Assert.*;
-
 public class BitsTest {
 
     @Test
@@ -18,9 +13,5 @@ public class BitsTest {
     @Test
     public void longToByteArray() {
         System.out.println(Bits.dumpByteArray(Bits.longToByteArray(532, 2)));
-    }
-
-    @Test
-    public void test() {
     }
 }
