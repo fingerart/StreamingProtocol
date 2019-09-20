@@ -99,18 +99,18 @@ public class ReceiverReport implements IPacket, IMessage {
         return buffer.array();
     }
 
-        public static ReceiverReport of(ByteBuffer buffer) {
-            ReceiverReport receiverReport = new ReceiverReport();
-            byte vpc = buffer.get();
-            receiverReport.version = vpc >> 6 & 0x3;
-            receiverReport.padding = (vpc >> 5 & 0x1) == 1;
-            receiverReport.counter = vpc & 0x1f;
-            receiverReport.pt = buffer.get() & 0xff;
-            receiverReport.length = buffer.getShort();
+    public static ReceiverReport of(ByteBuffer buffer) {
+        ReceiverReport receiverReport = new ReceiverReport();
+        byte vpc = buffer.get();
+        receiverReport.version = vpc >> 6 & 0x3;
+        receiverReport.padding = (vpc >> 5 & 0x1) == 1;
+        receiverReport.counter = vpc & 0x1f;
+        receiverReport.pt = buffer.get() & 0xff;
+        receiverReport.length = buffer.getShort();
 
-            // TODO: 2019/1/6 直接读取暂不处理
-            buffer.get(new byte[receiverReport.length * 32]);
+        // TODO: 2019/1/6 直接读取暂不处理
+        buffer.get(new byte[receiverReport.length * 32]);
 
-            return receiverReport;
-        }
+        return receiverReport;
+    }
 }

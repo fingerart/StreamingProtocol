@@ -1,6 +1,4 @@
-package io.chengguo.streaming.rtsp.serialize;
-
-import java.util.Arrays;
+package io.chengguo.streaming.rtsp.sdp;
 
 import io.chengguo.streaming.codec.h264.SPS;
 
@@ -32,7 +30,7 @@ public class H264SDP extends SDP {
                         } else if ("sprop-parameter-sets".equals(items[0])) {
                             String[] sets = items[1].split(",");
                             if (sets.length == 2) {
-                                System.out.println(Arrays.toString(sets));
+                                sps = SPS.valueOf(sets[0]);
                             }
                         }
                     }
@@ -47,6 +45,7 @@ public class H264SDP extends SDP {
                 "mimeType='" + mimeType + '\'' +
                 ", sampleRate=" + sampleRate +
                 ", packetizationMode=" + packetizationMode +
+                ", sps=" + sps +
                 '}';
     }
 }

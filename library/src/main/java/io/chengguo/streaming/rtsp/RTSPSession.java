@@ -1,5 +1,7 @@
 package io.chengguo.streaming.rtsp;
 
+import androidx.annotation.NonNull;
+
 import java.util.HashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -43,11 +45,14 @@ public class RTSPSession {
 
     private void setCallbacks() {
         transport = method.createTransport(host, port, 3000);
-        transport.setRtspResolver(new RTSPResolver());
-        transport.setRtpResolver(new RTPResolver());
-        transport.setRtcpResolver(new RTCPResolver());
-        transport.getRtspResolver().setResolverListener(new IResolver.IResolverCallback<Response>() {
+        transport.setRtspResolver(new RTSPResolver(createWrapRtspResolver()));
+        transport.setRtpResolver(new RTPResolver(createWrapRtpResolver()));
+        transport.setRtcpResolver(new RTCPResolver(createWrapRtcpResolver()));
+    }
 
+    @NonNull
+    private IResolver.IResolverCallback<Response> createWrapRtspResolver() {
+        return new IResolver.IResolverCallback<Response>() {
             @Override
             public void onResolve(Response response) {
                 //获取暂存中的Request
@@ -66,14 +71,22 @@ public class RTSPSession {
                     mRtspResolverCallback.onResolve(response);
                 }
             }
-        });
-        transport.getRtpResolver().setResolverListener(new IResolver.IResolverCallback<RtpPacket>() {
+        };
+    }
+
+    @NonNull
+    private IResolver.IResolverCallback<RtpPacket> createWrapRtpResolver() {
+        return new IResolver.IResolverCallback<RtpPacket>() {
             @Override
             public void onResolve(RtpPacket rtpPacket) {
                 mRtpResolverCallback.onResolve(rtpPacket);
             }
-        });
-        transport.getRtcpResolver().setResolverListener(new RTCPResolver.RTCPResolverListener() {
+        };
+    }
+
+    @NonNull
+    private RTCPResolver.RTCPResolverListener createWrapRtcpResolver() {
+        return new RTCPResolver.RTCPResolverListener() {
             @Override
             public void onSenderReport(SenderReport senderReport) {
                 System.out.println(senderReport);
@@ -83,13 +96,14 @@ public class RTSPSession {
 
             @Override
             public void onReceiverReport(ReceiverReport receiverReport) {
+                System.out.println("RTSPSession#onReceiverReport: " + "receiverReport = [" + receiverReport + "]");
             }
 
             @Override
             public void onSourceDescription(SourceDescription sourceDescription) {
-                System.out.println(sourceDescription);
+                System.out.println("RTSPSession#onSourceDescription: " + "sourceDescription = [" + sourceDescription + "]");
             }
-        });
+        };
     }
 
     public void connect() {
@@ -134,7 +148,7 @@ public class RTSPSession {
         if (!Utils.isEmpty(session)) {
             request.addHeader(new SessionHeader(session, 0));
         }
-        request.addHeader(new UserAgentHeader("ChengGuo"));
+        request.addHeader(new UserAgentHeader("ChengGuo Live"));
         StringBuilder sb = new StringBuilder();
         sb.append(">----------------------- ").append(request.getLine().getMethod()).append("\r\n")
                 .append(request.toString())

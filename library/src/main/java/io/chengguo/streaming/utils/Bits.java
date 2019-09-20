@@ -2,7 +2,10 @@ package io.chengguo.streaming.utils;
 
 import androidx.annotation.IntRange;
 
+import org.jetbrains.annotations.Contract;
+
 import java.nio.ByteBuffer;
+import java.util.Locale;
 
 public class Bits {
 
@@ -107,7 +110,7 @@ public class Bits {
         return result;
     }
 
-    public static String dumpByteArray(byte[] bytes) {
+    public static String dumpBytes(byte[] bytes) {
         StringBuilder sb = new StringBuilder();
         for (int i = 0; i < bytes.length; i++) {
             sb.append(bytes[i] & 0xFF).append(" ");
@@ -116,13 +119,26 @@ public class Bits {
     }
 
     private static final char[] HEX_ARRAY = "0123456789ABCDEF".toCharArray();
-    public static String bytesToHex(byte[] bytes) {
-        char[] hexChars = new char[bytes.length * 2];
-        for (int j = 0; j < bytes.length; j++) {
-            int v = bytes[j] & 0xFF;
-            hexChars[j * 2] = HEX_ARRAY[v >>> 4];
-            hexChars[j * 2 + 1] = HEX_ARRAY[v & 0x0F];
+
+    public static String dumpBytesToHex(byte[] bytes) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("----+-------------------------+-------------------------+").append("\r\n");
+        sb.append("    | 0  1  2  3  4  5  6  7  | 0  1  2  3  4  5  6  7  |").append("\r\n");
+        sb.append("----+-------------------------+-------------------------+").append("\r\n");
+        for (int i = 0, l = 0; i < bytes.length; i++) {
+            if (i % 16 == 0) {
+                if (i != 0) {
+                    sb.append("\r\n");
+                }
+                sb.append(String.format(Locale.getDefault(), "%04d", l++)).append("| ");
+            }
+            int v = bytes[i] & 0xFF;
+            sb.append(HEX_ARRAY[v >>> 4]).append(HEX_ARRAY[v & 0x0F]).append(" ");
+            if ((i + 1) % 8 == 0) {
+                sb.append("| ");
+            }
         }
-        return new String(hexChars);
+        sb.append("\r\n").append("----+-------------------------+-------------------------+");
+        return sb.toString();
     }
 }

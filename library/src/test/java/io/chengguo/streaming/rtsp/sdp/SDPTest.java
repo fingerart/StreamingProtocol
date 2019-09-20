@@ -1,9 +1,12 @@
-package io.chengguo.streaming.rtsp.serialize;
+package io.chengguo.streaming.rtsp.sdp;
 
 import org.junit.Test;
 
-import java.util.Arrays;
+import java.nio.ByteBuffer;
 import java.util.Base64;
+
+import io.chengguo.streaming.codec.h264.SPS;
+import io.chengguo.streaming.utils.Bits;
 
 public class SDPTest {
 
@@ -33,6 +36,9 @@ public class SDPTest {
 
     @Test
     public void testBase() {
-        System.out.println(Arrays.toString(Base64.getDecoder().decode("J0LgC6kYYJ2ANQYBBrbCte98BA==")));
+        byte[] spsBytes = Base64.getDecoder().decode("Z00AHp2oKA9puAgICBA=");
+        System.out.println(Bits.dumpBytesToHex(spsBytes));
+        SPS sps = SPS.valueOf(ByteBuffer.wrap(spsBytes));
+        System.out.println(sps);
     }
 }

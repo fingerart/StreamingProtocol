@@ -17,6 +17,10 @@ public class RTCPResolver implements IResolver<Integer, RTCPResolver.RTCPResolve
     private DataInputStream inputStream;
     private RTCPResolverListener rtcpResolverListener;
 
+    public RTCPResolver(RTCPResolverListener rtcpResolverListener) {
+        this.rtcpResolverListener = rtcpResolverListener;
+    }
+
     @Override
     public void regist(InputStream inputStream) {
         this.inputStream = new DataInputStream(inputStream);
