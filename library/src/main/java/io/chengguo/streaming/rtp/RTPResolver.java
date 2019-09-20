@@ -16,6 +16,10 @@ public class RTPResolver implements IResolver<Integer, IResolver.IResolverCallba
     private DataInputStream inputStream;
     private IResolverCallback<RtpPacket> resolverCallback;
 
+    public RTPResolver(IResolverCallback<RtpPacket> resolverCallback) {
+        this.resolverCallback = resolverCallback;
+    }
+
     @Override
     public void regist(InputStream inputStream) {
         this.inputStream = new DataInputStream(inputStream);

@@ -13,6 +13,16 @@ public class Frame {
             refIdc = b >> 5 & 0x3;
             type = b & 0x1F;
         }
+
+        @Override
+        public String toString() {
+            return "Type{" +
+                    "forbidden=" + forbidden +
+                    ", refIdc=" + refIdc +
+                    ", type=" + type +
+                    '}';
+        }
     }
+
 
 }

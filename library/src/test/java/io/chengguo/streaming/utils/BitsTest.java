@@ -12,6 +12,11 @@ public class BitsTest {
 
     @Test
     public void longToByteArray() {
-        System.out.println(Bits.dumpByteArray(Bits.longToByteArray(532, 2)));
+        System.out.println(Bits.dumpBytes(Bits.longToByteArray(329382938, 2)));
+    }
+
+    @Test
+    public void dumpBytesToHex() {
+        System.out.println(Bits.dumpBytesToHex(new byte[]{32, 12, 2,3,1,8,32, 12, 2,3,1,8,32, 12, 2,3,1,8,}));
     }
 }

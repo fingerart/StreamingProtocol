@@ -17,6 +17,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 
 import io.chengguo.streaming.codec.Decoder;
 import io.chengguo.streaming.exceptions.NotSupportException;
+import io.chengguo.streaming.utils.Bits;
 
 @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
 public class H264Decoder extends Decoder {
@@ -193,7 +194,7 @@ public class H264Decoder extends Decoder {
     private void intoDecoder(byte[] frame) {
         int index;
         if (((index = mediaCodec.dequeueInputBuffer(10)) >= 0)) {
-            Log.d(TAG, "input.dequeue [" + index + "] " + Arrays.toString(frame));
+            Log.d(TAG, "input.dequeue [" + index + "] \r\n" + Bits.dumpBytesToHex(frame));
             ByteBuffer inputBuffer = codecInputBuffers[index];
             inputBuffer.clear();
             inputBuffer.put(frame, 0, frame.length);
@@ -224,7 +225,7 @@ public class H264Decoder extends Decoder {
     }
 
     public void input(byte[] data, final long presentationTimeUs, boolean marker) throws Exception {
-        Log.d(TAG, "RTP Payload: " + Arrays.toString(data));
+        Log.d(TAG, "RTP Payload: \r\n" + Bits.dumpBytesToHex(data));
 
         if (decoding) {
             rawRtpPackets.put(data);

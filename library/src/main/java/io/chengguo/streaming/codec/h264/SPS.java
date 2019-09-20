@@ -1,5 +1,7 @@
 package io.chengguo.streaming.codec.h264;
 
+import android.util.Base64;
+
 import java.nio.ByteBuffer;
 
 public class SPS extends Frame {
@@ -14,7 +16,13 @@ public class SPS extends Frame {
         return type == TYPE;
     }
 
-    public static SPS create(ByteBuffer buffer) {
+    public static SPS valueOf(String base64) {
+        byte[] spsBytes = Base64.decode(base64, Base64.DEFAULT);
+        ByteBuffer buffer = ByteBuffer.wrap(spsBytes);
+        return valueOf(buffer);
+    }
+
+    public static SPS valueOf(ByteBuffer buffer) {
         SPS sps = new SPS();
         sps.parseType(buffer.get());
         sps.parseProfile(buffer.get());
@@ -22,16 +30,16 @@ public class SPS extends Frame {
         sps.parseSetFlag(((byte) (b >> 2)));
         byte pre = buffer.get(5);
         byte next = buffer.get(6);
-        int widthMarco = (pre & 0x3) << 5 | (next >> 3 & 0x1F);
-        sps.width = (widthMarco + 1) * 16;
-        byte last = buffer.get(7);
-        int heightMarco = next & 0x7 | (last >> 4 & 0xF);
-        sps.height = (heightMarco + 1) * 16;
+        int widthMarco = ((pre & 0x7) << 8) | next;
+        sps.width = (widthMarco + 0) * 16;
+        pre = buffer.get(7);
+        next = buffer.get(8);
+        int heightMarco = (pre << 1) | (next >> 7 & 0x1);
+        sps.height = (heightMarco + 0) * 16;
         return sps;
     }
 
     private void parseSetFlag(byte b) {
-
     }
 
     private void parseProfile(byte b) {

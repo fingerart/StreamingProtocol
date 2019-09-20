@@ -2,6 +2,8 @@ package io.chengguo.streaming;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+
+import android.net.Uri;
 import android.util.Log;
 
 import java.net.URI;
@@ -16,7 +18,10 @@ import io.chengguo.streaming.rtsp.Response;
 import io.chengguo.streaming.rtsp.header.Header;
 import io.chengguo.streaming.rtsp.header.RangeHeader;
 import io.chengguo.streaming.rtsp.header.TransportHeader;
+import io.chengguo.streaming.rtsp.sdp.H264SDP;
 import io.chengguo.streaming.transport.TransportMethod;
+
+import static io.chengguo.streaming.rtsp.header.TransportHeader.Specifier.TCP;
 
 /**
  * RTSPClient
@@ -69,13 +74,13 @@ public class RTSPClient implements ITransportListener {
     }
 
     public void disconnect() {
-        if (session.isConnected()) {
+        if (isConnected()) {
             session.disconnect();
         }
     }
 
     public void play(URI uri) {
-        if (!session.isConnected()) {
+        if (!isConnected()) {
             Log.e(TAG, "session is not connection");
             return;
         }
@@ -87,7 +92,7 @@ public class RTSPClient implements ITransportListener {
     }
 
     public void pause() {
-        if (!session.isConnected()) {
+        if (!isConnected()) {
             Log.e(TAG, "session is not connection");
             return;
         }
@@ -99,7 +104,7 @@ public class RTSPClient implements ITransportListener {
     }
 
     public void teardown() {
-        if (!session.isConnected()) {
+        if (!isConnected()) {
             Log.e(TAG, "session is not connection");
             return;
         }
@@ -108,6 +113,10 @@ public class RTSPClient implements ITransportListener {
                 .uri(baseUri)
                 .build();
         session.send(stop);
+    }
+
+    public boolean isConnected() {
+        return session.isConnected();
     }
 
     @Override
@@ -130,25 +139,21 @@ public class RTSPClient implements ITransportListener {
         Request preRequest = response.getRequest();
         switch (preRequest.getLine().getMethod()) {
             case OPTIONS:
-                builder.method(Method.DESCRIBE)
-                        .uri(preRequest.getLine().getUri());
+                builder.method(Method.DESCRIBE).uri(preRequest.getLine().getUri());
                 break;
             case DESCRIBE:
                 Header<String> base = response.getHeader("Content-Base");
                 baseUri = base.getRawValue();
-                builder.method(Method.SETUP)
-                        .uri(URI.create(baseUri + "track1"))
-                        .addHeader(new TransportHeader.Builder()
-                                .specifier(TransportHeader.Specifier.TCP)
-                                .broadcastType(TransportHeader.BroadcastType.unicast)
-                                .clientPort(50846, 50847)
-                                .build()
-                        );
+                H264SDP sdp = new H264SDP();
+                sdp.from(response.getBody().toString());
+                TransportHeader header = new TransportHeader.Builder()
+                        .specifier(TCP)
+                        .broadcastType(TransportHeader.BroadcastType.unicast)
+                        .build();
+                builder.method(Method.SETUP).uri(URI.create(baseUri + sdp.getMediaControl())).addHeader(header);
                 break;
             case SETUP:
-                builder.method(Method.PLAY)
-                        .addHeader(new RangeHeader(0))
-                        .uri(baseUri);
+                builder.method(Method.PLAY).addHeader(new RangeHeader(0)).uri(baseUri);
                 break;
             case PLAY:
             default:

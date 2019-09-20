@@ -1,8 +1,8 @@
-package io.chengguo.streaming.rtsp.serialize;
+package io.chengguo.streaming.rtsp.sdp;
 
-import android.support.annotation.CallSuper;
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
+
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import java.util.HashMap;
 
@@ -51,6 +51,50 @@ class SDP implements ISerializer {
      * Media Description, name and address (m): video 0 RTP/AVP 96
      */
     private MediaDescription mediaDescription;
+
+    public int getVersion() {
+        return version;
+    }
+
+    public Owner getOwner() {
+        return owner;
+    }
+
+    public String getSessionName() {
+        return sessionName;
+    }
+
+    public String getSessionInfo() {
+        return sessionInfo;
+    }
+
+    public long getSessionTimeStart() {
+        return sessionTimeStart;
+    }
+
+    public long getSessionTimeStop() {
+        return sessionTimeStop;
+    }
+
+    public String getTool() {
+        return tool;
+    }
+
+    public String getType() {
+        return type;
+    }
+
+    public String getMediaControl() {
+        return mediaControl;
+    }
+
+    public String getRange() {
+        return range;
+    }
+
+    public MediaDescription getMediaDescription() {
+        return mediaDescription;
+    }
 
     @Nullable
     public String query(String key) {

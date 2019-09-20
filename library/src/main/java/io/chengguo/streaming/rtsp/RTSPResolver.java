@@ -19,6 +19,13 @@ class RTSPResolver implements IResolver<Integer, IResolver.IResolverCallback<Res
     private IResolverCallback<Response> resolverCallback;
     private DataInputStream reader;
 
+    public RTSPResolver() {
+    }
+
+    public RTSPResolver(IResolverCallback<Response> resolverCallback) {
+        this.resolverCallback = resolverCallback;
+    }
+
     @Override
     public void regist(InputStream inputStream) {
         //转换InputStream的类型

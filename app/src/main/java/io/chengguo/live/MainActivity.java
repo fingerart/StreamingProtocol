@@ -5,6 +5,7 @@ import android.content.pm.ActivityInfo;
 import android.media.AudioTrack;
 import android.os.Build;
 import android.os.Bundle;
+
 import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
 
@@ -37,6 +38,8 @@ public class MainActivity extends Activity implements View.OnClickListener, RTSP
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         setContentView(R.layout.activity_main);
         setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
+
+        createClient();
 
         mSurfaceView = findViewById(R.id.surface);
         findViewById(R.id.btn_start).setOnClickListener(this);
@@ -72,20 +75,26 @@ public class MainActivity extends Activity implements View.OnClickListener, RTSP
         });
     }
 
-    @Override
-    protected void onResume() {
-        super.onResume();
+    private void createClient() {
         rtspClient = RTSPClient.create()
-                .host("192.168.0.100")
+                .host("14.29.172.223")
                 .transport(TransportMethod.TCP)
                 .setRTPPacketReciver(this)
                 .build();
-        rtspClient.connect();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        if (!rtspClient.isConnected()) {
+            rtspClient.connect();
+        }
     }
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
+        rtspClient.teardown();
         rtspClient.disconnect();
     }
 
@@ -93,7 +102,7 @@ public class MainActivity extends Activity implements View.OnClickListener, RTSP
     public void onClick(View v) {
         switch (v.getId()) {
             case R.id.btn_start:
-                rtspClient.play(URI.create("rtsp://172.17.0.2/bipbop-gear1-all.264"));
+                rtspClient.play(URI.create("rtsp://14.29.172.223/bipbop-gear1-all.264"));
                 break;
             case R.id.btn_stop:
                 rtspClient.pause();
