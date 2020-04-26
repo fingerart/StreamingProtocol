@@ -69,7 +69,7 @@ public class Bits {
     public static int byteArrayToInt(byte[] arr) {
         int result = 0;
         for (int i = 0; i < arr.length && i < 4; i++) {
-            result |= arr[i] << Byte.SIZE * (3 - i);
+            result |= arr[i] << Byte.SIZE * (arr.length - 1 - i);
         }
         return result;
     }
@@ -112,9 +112,40 @@ public class Bits {
 
     public static String dumpBytes(byte[] bytes) {
         StringBuilder sb = new StringBuilder();
-        for (int i = 0; i < bytes.length; i++) {
-            sb.append(bytes[i] & 0xFF).append(" ");
+        sb.append("----+---------------------------------+---------------------------------+").append("\r" + "\n");
+        sb.append("    | 0   1   2   3   4   5   6   7   | 0   1   2   3   4   5   6   7   |").append("\r" + "\n");
+        sb.append("----+---------------------------------+---------------------------------+").append("\r" + "\n");
+        for (int i = 0, l = 0; i < bytes.length; i++) {
+            if (i % 16 == 0) {
+                if (i != 0) {
+                    sb.append("\r\n");
+                }
+                sb.append(String.format(Locale.getDefault(), "%04d", l++)).append("| ");
+            }
+            sb.append(String.format(Locale.getDefault(),"%3d", bytes[i] & 0xFF)).append(" ");
+            if ((i + 1) % 8 == 0) {
+                sb.append("| ");
+            }
         }
+        sb.append("\r\n").append("----+---------------------------------+---------------------------------+");
+        return sb.toString();
+    }
+
+    public static String dumpBytesToBinary(byte[] bytes) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("    0           1           2           3           4").append("\r\n");
+        sb.append("----+-----------+-----------+-----------+-----------+").append("\r\n");
+        for (int i = 0, l = 0; i < bytes.length; i++) {
+            if (i % 4 == 0) {
+                if (i != 0) {
+                    sb.append("\r\n");
+                }
+                sb.append(String.format(Locale.getDefault(), "%04d", l++)).append("| ");
+            }
+            String raw = String.format("%8s", Integer.toBinaryString(bytes[i] & 0xFF)).replace(" ", "0");
+            sb.append(raw.substring(0, 4)).append(" ").append(raw.substring(4, 8)).append(" | ");
+        }
+        sb.append("\r\n").append("----+-----------+-----------+-----------+-----------+");
         return sb.toString();
     }
 

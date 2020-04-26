@@ -20,7 +20,7 @@ public class RangeHeader extends StringHeader {
 
     public RangeHeader(String nameOrRawHeader) {
         super(nameOrRawHeader);
-        this.deformat(getRawValue());
+        this.unformat(getRawValue());
     }
 
     public RangeHeader(double begin, double end) {
@@ -64,7 +64,7 @@ public class RangeHeader extends StringHeader {
      *
      * @param value
      */
-    private void deformat(String value) {
+    private void unformat(String value) {
         String[] rangeDebris = splitSafely(value, "=");
         try {
             timeUnit = TimeUnit.valueOf(rangeDebris[0].toUpperCase());

@@ -120,8 +120,6 @@ public class RTSPClientTest {
         session.send(request);
     }
 
-
-
     @After
     public void tearDown() throws Exception {
         Thread.sleep(100000);
