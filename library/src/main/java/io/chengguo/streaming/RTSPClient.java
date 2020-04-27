@@ -29,16 +29,13 @@ public class RTSPClient extends Observable<RTSPClient.IRTPPacketObserver> {
 
     private static final String TAG = RTSPClient.class.getSimpleName();
 
-    private RTSPInterceptor mInterceptor;
     private RTSPSession session;
-    private String baseUri;
 
     public RTSPClient(Builder builder) {
         mInterceptor = builder.rtspInterceptor;
         registerObserver(builder.rtpPacketReceiver);
         session = new RTSPSession(builder.host, builder.port, builder.transportMethod);
-        session.setTransportListener(mTransportListener);
-        session.setRTSPResolverCallback(mRTSPResolverCallback);
+        session.setObserver(mTransportListener);
         session.setRTPResolverCallback(mRTPResolverCallback);
     }
 
@@ -92,34 +89,6 @@ public class RTSPClient extends Observable<RTSPClient.IRTPPacketObserver> {
         return session.isConnected();
     }
 
-    private Request makeNextRequest(Response response) {
-        Request.Builder builder = new Request.Builder();
-        Request prevRequest = response.getRequest();
-        switch (prevRequest.getLine().getMethod()) {
-            case OPTIONS:
-                builder.method(Method.DESCRIBE).uri(prevRequest.getLine().getUri());
-                break;
-            case DESCRIBE:
-                Header<String> base = response.getHeader("Content-Base");
-                baseUri = base.getRawValue();
-                H264SDP sdp = new H264SDP();
-                sdp.from(response.getBody().toString());
-                TransportHeader header = new TransportHeader.Builder()
-                        .specifier(TCP)
-                        .broadcastType(TransportHeader.BroadcastType.unicast)
-                        .build();
-                builder.method(Method.SETUP).uri(URI.create(baseUri + sdp.getMediaControl())).addHeader(header);
-                break;
-            case SETUP:
-                builder.method(Method.PLAY).addHeader(new RangeHeader(0)).uri(baseUri);
-                break;
-            case PLAY:
-            default:
-                return null;//Not replay
-        }
-        return builder.build();
-    }
-
     private final ITransportListener mTransportListener = new ITransportListener() {
         @Override
         public void onConnected() {
@@ -141,7 +110,6 @@ public class RTSPClient extends Observable<RTSPClient.IRTPPacketObserver> {
                 observer.onDisconnected();
             }
         }
-
     };
 
     private final IResolver.IResolverCallback<RtpPacket> mRTPResolverCallback = new IResolver.IResolverCallback<RtpPacket>() {
@@ -149,26 +117,6 @@ public class RTSPClient extends Observable<RTSPClient.IRTPPacketObserver> {
         public void onResolve(RtpPacket rtpPacket) {
             for (IRTPPacketObserver observer : mObservers) {
                 observer.onReceive(rtpPacket);
-            }
-        }
-    };
-
-    private final IResolver.IResolverCallback<Response> mRTSPResolverCallback = new IResolver.IResolverCallback<Response>() {
-        @Override
-        public void onResolve(Response response) {
-            System.out.println("response = [" + response + "]");
-            if (response.getLine().isSuccessful()) {
-                Request nextRequest = makeNextRequest(response);
-                try {
-                    if (mInterceptor != null) {
-                        nextRequest = mInterceptor.onIntercept(nextRequest, response);
-                    }
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-                if (nextRequest != null && nextRequest.getLine().getMethod() != null) {
-                    session.send(nextRequest);
-                }
             }
         }
     };
@@ -182,7 +130,6 @@ public class RTSPClient extends Observable<RTSPClient.IRTPPacketObserver> {
         private String host;
         private int port = 554;
         private TransportMethod transportMethod = TransportMethod.TCP;
-        private RTSPInterceptor rtspInterceptor;
         private IRTPPacketObserver rtpPacketReceiver;
 
         public Builder host(String host) {
@@ -200,11 +147,6 @@ public class RTSPClient extends Observable<RTSPClient.IRTPPacketObserver> {
             return this;
         }
 
-        public Builder setInterceptor(RTSPInterceptor rtspInterceptor) {
-            this.rtspInterceptor = rtspInterceptor;
-            return this;
-        }
-
         public Builder setRTPPacketObserver(IRTPPacketObserver rtpPacketObserver) {
             this.rtpPacketReceiver = rtpPacketObserver;
             return this;
@@ -213,10 +155,6 @@ public class RTSPClient extends Observable<RTSPClient.IRTPPacketObserver> {
         public RTSPClient build() {
             return new RTSPClient(this);
         }
-    }
-
-    public interface RTSPInterceptor {
-        Request onIntercept(@Nullable Request nextRequest, @NonNull Response preResponse);
     }
 
     public interface IRTPPacketObserver {

@@ -6,17 +6,17 @@ package io.chengguo.streaming.transport;
 public enum TransportMethod {
     TCP {
         @Override
-        public ITransport createTransport(String hostname, int port, int timeout) {
+        public TransportImpl createTransport(String hostname, int port, int timeout) {
             return new TCPTransport(hostname, port, timeout);
         }
     },
 
     UDP {
         @Override
-        public ITransport createTransport(String hostname, int port, int timeout) {
+        public TransportImpl createTransport(String hostname, int port, int timeout) {
             return new UDPTransport();
         }
     };
 
-    public abstract ITransport createTransport(String hostname, int port, int timeout);
+    public abstract TransportImpl createTransport(String hostname, int port, int timeout);
 }

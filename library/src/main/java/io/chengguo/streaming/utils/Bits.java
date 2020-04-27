@@ -122,7 +122,7 @@ public class Bits {
                 }
                 sb.append(String.format(Locale.getDefault(), "%04d", l++)).append("| ");
             }
-            sb.append(String.format(Locale.getDefault(),"%3d", bytes[i] & 0xFF)).append(" ");
+            sb.append(String.format(Locale.getDefault(),"%-3d", bytes[i] & 0xFF)).append(" ");
             if ((i + 1) % 8 == 0) {
                 sb.append("| ");
             }

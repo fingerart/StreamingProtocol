@@ -9,107 +9,55 @@ import java.net.Socket;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-import io.chengguo.streaming.rtcp.RTCPResolver;
-import io.chengguo.streaming.rtp.RtpPacket;
 import io.chengguo.streaming.rtsp.IMessage;
-import io.chengguo.streaming.rtsp.IResolver;
-import io.chengguo.streaming.rtsp.ITransportListener;
-import io.chengguo.streaming.rtsp.Response;
-import io.chengguo.streaming.rtsp.TransportListenerWrapper;
 import io.chengguo.streaming.utils.L;
 
 /**
  * Created by fingerart on 2018-09-08.
  */
-public class TCPTransport implements ITransport {
+public class TCPTransport extends TransportImpl {
 
     private static final ExecutorService EXECUTOR = Executors.newCachedThreadPool();
-    private InetSocketAddress address;
     private int timeout;
     private Socket socket;
+    private InetSocketAddress address;
     private InputStream inputStream;
     private OutputStream outputStream;
-    private TransportListenerWrapper transportListener;
-    private IResolver<Integer, IResolver.IResolverCallback<Response>> mRtspResolver;
-    private IResolver<Integer, IResolver.IResolverCallback<RtpPacket>> mRtpResolver;
-    private IResolver<Integer, RTCPResolver.RTCPResolverListener> mRtcpResolver;
 
     public TCPTransport(String hostname, int port, int timeout) {
         this.timeout = timeout;
         address = new InetSocketAddress(hostname, port);
         socket = new Socket();
-        transportListener = new TransportListenerWrapper();
     }
 
     @Override
-    public void setTransportListener(ITransportListener listener) {
-        transportListener.setBehaviour(listener);
-    }
-
-    @Override
-    public void connect() throws Exception {
+    public DataInputStream connectSync() throws IOException {
+        if (!isConnected()) {
+            throw new IllegalStateException("TCP is connected.");
+        }
         socket.connect(address, timeout);
         inputStream = socket.getInputStream();
         outputStream = socket.getOutputStream();
-        transportListener.onConnected();
-        DataInputStream in = new DataInputStream(inputStream);
-        registerResolver();
-        int firstByte;
-        while ((firstByte = in.readUnsignedByte()) > 0) {
-            L.d("First Byte: " + firstByte);
-            //'$' beginning is the RTP and RTCP
-            if (firstByte == 36) {//0x24
-                int secondByte = in.readUnsignedByte();
-                //channel is rtp
-                if (secondByte == 0) {
-                    if (mRtpResolver != null) {
-                        int rtpLength = in.readUnsignedShort();
-                        mRtpResolver.resolve(rtpLength);
-                    }
-                } else if (secondByte == 1) { //channel is rtcp
-                    if (mRtcpResolver != null) {
-                        int rtcpLength = in.readUnsignedShort();
-                        mRtcpResolver.resolve(rtcpLength);
-                    }
-                }
-            } else {//RTSP
-                if (mRtspResolver != null) {
-                    mRtspResolver.resolve(firstByte);
-                }
-            }
-        }
+        return new DataInputStream(inputStream);
     }
 
     @Override
-    public void connectAsync() {
+    public void connect() {
         EXECUTOR.execute(new Runnable() {
             @Override
             public void run() {
                 try {
-                    connect();
+                    DataInputStream in = connectSync();
+                    try {
+                        dispatchOnConnected(in);
+                    } catch (IOException e) {
+                        dispatchOnDisconnected();
+                    }
                 } catch (Exception e) {
-                    e.printStackTrace();
-                    transportListener.onConnectFail(e);
-                } finally {
-                    transportListener.onDisconnected();
+                    dispatchOnConnectFailure(e);
                 }
             }
         });
-    }
-
-    /**
-     * 将InputStream注册到Resolver中
-     */
-    private void registerResolver() {
-        if (mRtspResolver != null) {
-            mRtspResolver.regist(inputStream);
-        }
-        if (mRtpResolver != null) {
-            mRtpResolver.regist(inputStream);
-        }
-        if (mRtcpResolver != null) {
-            mRtcpResolver.regist(inputStream);
-        }
     }
 
     @Override
@@ -119,79 +67,49 @@ public class TCPTransport implements ITransport {
 
     @Override
     public void send(final IMessage message) {
+        send(message, null);
+    }
+
+    @Override
+    public void send(final IMessage message, final MessageCallback callback) {
+        if (!isOutputShutdown()) {
+            if (callback != null) {
+                callback.onFailure(new IllegalStateException("Output is Shutdown"));
+            }
+            return;
+        }
         EXECUTOR.execute(new Runnable() {
             @Override
             public void run() {
                 try {
-                    if (isConnected()) {
+                    if (!isOutputShutdown()) {
                         outputStream.write(message.toRaw());
+                        if (callback != null) {
+                            callback.onSuccess();
+                        }
                     } else {
-                        L.w("Not connect.");
+                        throw new IllegalStateException("Output is Shutdown");
                     }
-                } catch (IOException e) {
-                    e.printStackTrace();
+                } catch (Exception e) {
+                    if (callback != null) {
+                        callback.onFailure(e);
+                    }
                 }
             }
         });
+    }
+
+    private boolean isOutputShutdown() {
+        return socket == null || socket.isOutputShutdown();
     }
 
     @Override
     public void disconnect() {
         try {
             socket.close();
-            if (mRtspResolver != null) {
-                mRtspResolver.release();
-            }
-            if (mRtpResolver != null) {
-                mRtpResolver.release();
-            }
-            if (mRtcpResolver != null) {
-                mRtcpResolver.release();
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
+        } catch (IOException ignore) {
         } finally {
-            transportListener.onDisconnected();
+            dispatchOnDisconnected();
         }
-    }
-
-    @Override
-    public void setRtspResolver(IResolver<Integer, IResolver.IResolverCallback<Response>> resolver) {
-        //如果存在则释放之前的解析器
-        if (mRtspResolver != null) {
-            mRtspResolver.release();
-        }
-        mRtspResolver = resolver;
-    }
-
-    @Override
-    public void setRtpResolver(IResolver<Integer, IResolver.IResolverCallback<RtpPacket>> resolver) {
-        if (mRtpResolver != null) {
-            mRtpResolver.release();
-        }
-        mRtpResolver = resolver;
-    }
-
-    @Override
-    public void setRtcpResolver(IResolver<Integer, RTCPResolver.RTCPResolverListener> rtcpResolver) {
-        if (mRtcpResolver != null) {
-            mRtcpResolver.release();
-        }
-        mRtcpResolver = rtcpResolver;
-    }
-
-    @Override
-    public IResolver<Integer, IResolver.IResolverCallback<Response>> getRtspResolver() {
-        return mRtspResolver;
-    }
-
-    @Override
-    public IResolver<Integer, IResolver.IResolverCallback<RtpPacket>> getRtpResolver() {
-        return mRtpResolver;
-    }
-
-    @Override
-    public IResolver<Integer, RTCPResolver.RTCPResolverListener> getRtcpResolver() {
-        return mRtcpResolver;
     }
 }

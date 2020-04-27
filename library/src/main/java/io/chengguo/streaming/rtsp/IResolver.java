@@ -1,7 +1,7 @@
 package io.chengguo.streaming.rtsp;
 
+import java.io.DataInputStream;
 import java.io.IOException;
-import java.io.InputStream;
 
 /**
  * 解析器
@@ -10,16 +10,9 @@ import java.io.InputStream;
 public interface IResolver<T, Listener> {
 
     /**
-     * 告诉解析器目标InputStream
-     *
-     * @param inputStream
-     */
-    void regist(InputStream inputStream);
-
-    /**
      * 解析
      */
-    void resolve(T t) throws IOException;
+    void resolve(DataInputStream in, T t) throws IOException;
 
     /**
      * 设置回调
