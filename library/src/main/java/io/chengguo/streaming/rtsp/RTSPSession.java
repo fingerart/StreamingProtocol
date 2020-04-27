@@ -1,24 +1,28 @@
 package io.chengguo.streaming.rtsp;
 
-import androidx.annotation.NonNull;
-
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import androidx.annotation.NonNull;
 import io.chengguo.streaming.rtcp.RTCPResolver;
 import io.chengguo.streaming.rtcp.ReceiverReport;
 import io.chengguo.streaming.rtcp.SenderReport;
 import io.chengguo.streaming.rtcp.SourceDescription;
-import io.chengguo.streaming.rtp.RTPResolver;
 import io.chengguo.streaming.rtp.RtpPacket;
 import io.chengguo.streaming.rtsp.header.CSeqHeader;
+import io.chengguo.streaming.rtsp.header.Header;
+import io.chengguo.streaming.rtsp.header.RangeHeader;
 import io.chengguo.streaming.rtsp.header.SessionHeader;
+import io.chengguo.streaming.rtsp.header.TransportHeader;
 import io.chengguo.streaming.rtsp.header.UserAgentHeader;
-import io.chengguo.streaming.transport.ITransport;
+import io.chengguo.streaming.rtsp.sdp.H264SDP;
+import io.chengguo.streaming.transport.TransportImpl;
 import io.chengguo.streaming.transport.TransportMethod;
 import io.chengguo.streaming.utils.Utils;
+
+import static io.chengguo.streaming.rtsp.header.TransportHeader.Specifier.TCP;
 
 /**
  * RTSP session
@@ -31,22 +35,20 @@ public class RTSPSession {
     private String host;
     private int port;
     private TransportMethod method;
-    private ITransport transport;
+    private TransportImpl transport;
     private String session;
+    private String baseUri;
     private AtomicInteger sequence = new AtomicInteger();
     private HashMap<Integer, Request> requestList = new HashMap<>();
-    private IResolver.IResolverCallback<Response> mRtspResolverCallback;
     private IResolver.IResolverCallback<RtpPacket> mRtpResolverCallback;
-    private List<Interceptor> mInterceptors = new ArrayList();
+    private ArrayList<IInterceptor> mInterceptors = new ArrayList();
 
     public RTSPSession(String host, int port, TransportMethod method) {
         this.host = host;
         this.port = port;
         this.method = method;
         transport = this.method.createTransport(this.host, this.port, 3000);
-        transport.setRtspResolver(new RTSPResolver(createWrapRtspResolver()));
-        transport.setRtpResolver(new RTPResolver(createWrapRtpResolver()));
-        transport.setRtcpResolver(new RTCPResolver(createWrapRtcpResolver()));
+        transport.setTransportListener(new RTSPTransportListenerWrapper(createWrapRtspResolver(), createWrapRtpBridge(), createWrapRtcpResolver()));
     }
 
     @NonNull
@@ -65,16 +67,28 @@ public class RTSPSession {
                 if (sessionHeader != null) {
                     session = sessionHeader.getSession();
                 }
-                //回调
-                if (mRtspResolverCallback != null) {
-                    mRtspResolverCallback.onResolve(response);
+                for (IInterceptor Interceptor : mInterceptors) {
+                    Interceptor.onResponse(response);
+                }
+                if (response.getLine().isSuccessful()) {
+                    Request nextRequest = makeNextRequest(response);
+                    try {
+                        for (IInterceptor Interceptor : mInterceptors) {
+                            nextRequest = Interceptor.onSend(nextRequest, response);
+                        }
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                    if (nextRequest != null && nextRequest.getLine().getMethod() != null) {
+                        transport.send(nextRequest);
+                    }
                 }
             }
         };
     }
 
     @NonNull
-    private IResolver.IResolverCallback<RtpPacket> createWrapRtpResolver() {
+    private IResolver.IResolverCallback<RtpPacket> createWrapRtpBridge() {
         return new IResolver.IResolverCallback<RtpPacket>() {
             @Override
             public void onResolve(RtpPacket rtpPacket) {
@@ -105,26 +119,36 @@ public class RTSPSession {
         };
     }
 
+    private Request makeNextRequest(Response response) {
+        Request.Builder builder = new Request.Builder();
+        Request prevRequest = response.getRequest();
+        switch (prevRequest.getLine().getMethod()) {
+            case OPTIONS:
+                builder.method(Method.DESCRIBE).uri(prevRequest.getLine().getUri());
+                break;
+            case DESCRIBE:
+                Header<String> base = response.getHeader("Content-Base");
+                baseUri = base.getRawValue();
+                H264SDP sdp = new H264SDP();
+                sdp.from(response.getBody().toString());
+                TransportHeader header = new TransportHeader.Builder()
+                        .specifier(TCP)
+                        .broadcastType(TransportHeader.BroadcastType.unicast)
+                        .build();
+                builder.method(Method.SETUP).uri(URI.create(baseUri + sdp.getMediaControl())).addHeader(header);
+                break;
+            case SETUP:
+                builder.method(Method.PLAY).addHeader(new RangeHeader(0)).uri(baseUri);
+                break;
+            case PLAY:
+            default:
+                return null;//Not replay
+        }
+        return builder.build();
+    }
+
     public void connect() {
-        transport.connectAsync();
-    }
-
-    /**
-     * 设置传输监听器
-     *
-     * @param transportListener
-     */
-    public void setTransportListener(ITransportListener transportListener) {
-        transport.setTransportListener(transportListener);
-    }
-
-    /**
-     * 设置RTSP解析回调
-     *
-     * @param resolverCallback
-     */
-    public void setRTSPResolverCallback(IResolver.IResolverCallback<Response> resolverCallback) {
-        mRtspResolverCallback = resolverCallback;
+        transport.connect();
     }
 
     /**
@@ -156,8 +180,8 @@ public class RTSPSession {
         //暂存Request
         requestList.put(cseq, request);
 
-        for (Interceptor interceptor : mInterceptors) {
-            request = interceptor.onSend(request);
+        for (IInterceptor Interceptor : mInterceptors) {
+            request = Interceptor.onSend(request, null);
         }
 
         //发送请求
@@ -182,11 +206,15 @@ public class RTSPSession {
         }
     }
 
-    public void addInterceptor(Interceptor interceptor) {
-        mInterceptors.add(interceptor);
+    public void addInterceptor(IInterceptor Interceptor) {
+        if (Interceptor != null && !mInterceptors.contains(Interceptor)) {
+            mInterceptors.add(Interceptor);
+        }
     }
 
-    public void removeInterceptor(Interceptor interceptor){
-        mInterceptors.remove(interceptor);
+    public void removeInterceptor(IInterceptor Interceptor) {
+        if (Interceptor != null) {
+            mInterceptors.remove(Interceptor);
+        }
     }
 }

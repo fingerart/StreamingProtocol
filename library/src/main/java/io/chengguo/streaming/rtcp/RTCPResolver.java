@@ -2,9 +2,7 @@ package io.chengguo.streaming.rtcp;
 
 import java.io.DataInputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.nio.ByteBuffer;
-import java.nio.MappedByteBuffer;
 
 import io.chengguo.streaming.rtsp.IResolver;
 import io.chengguo.streaming.utils.L;
@@ -14,23 +12,20 @@ import io.chengguo.streaming.utils.L;
  */
 public class RTCPResolver implements IResolver<Integer, RTCPResolver.RTCPResolverListener> {
 
-    private DataInputStream inputStream;
     private RTCPResolverListener rtcpResolverListener;
+
+    public RTCPResolver() {
+    }
 
     public RTCPResolver(RTCPResolverListener rtcpResolverListener) {
         this.rtcpResolverListener = rtcpResolverListener;
     }
 
     @Override
-    public void regist(InputStream inputStream) {
-        this.inputStream = new DataInputStream(inputStream);
-    }
-
-    @Override
-    public void resolve(Integer rtcpLength) throws IOException {
+    public void resolve(DataInputStream in, Integer rtcpLength) throws IOException {
         L.d("RTCP length: " + rtcpLength);
         ByteBuffer buffer = ByteBuffer.allocate(rtcpLength);
-        inputStream.readFully(buffer.array());
+        in.readFully(buffer.array());
 
         resolveSingle(buffer);
     }
@@ -67,7 +62,6 @@ public class RTCPResolver implements IResolver<Integer, RTCPResolver.RTCPResolve
 
     @Override
     public void release() {
-        inputStream = null;
         rtcpResolverListener = null;
     }
 

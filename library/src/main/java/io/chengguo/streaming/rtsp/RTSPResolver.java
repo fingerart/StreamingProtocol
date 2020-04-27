@@ -2,7 +2,6 @@ package io.chengguo.streaming.rtsp;
 
 import java.io.DataInputStream;
 import java.io.IOException;
-import java.io.InputStream;
 
 import io.chengguo.streaming.rtsp.header.CSeqHeader;
 import io.chengguo.streaming.rtsp.header.ContentLengthHeader;
@@ -17,7 +16,6 @@ import io.chengguo.streaming.rtsp.header.TransportHeader;
 class RTSPResolver implements IResolver<Integer, IResolver.IResolverCallback<Response>> {
 
     private IResolverCallback<Response> resolverCallback;
-    private DataInputStream reader;
 
     public RTSPResolver() {
     }
@@ -27,16 +25,10 @@ class RTSPResolver implements IResolver<Integer, IResolver.IResolverCallback<Res
     }
 
     @Override
-    public void regist(InputStream inputStream) {
-        //转换InputStream的类型
-        reader = new DataInputStream(inputStream);
-    }
-
-    @Override
-    public void resolve(Integer firstByte) throws IOException {
+    public void resolve(DataInputStream in, Integer firstByte) throws IOException {
         String sLine;
         ResolverByLine lineResolver = new ResolverByLine();
-        while (reader != null && (sLine = reader.readLine()) != null) {
+        while (in != null && (sLine = in.readLine()) != null) {
             //拼接上已被读取的第一个字节
             if (firstByte != -1) {
                 sLine = Character.toString((char) firstByte.intValue()) + sLine;
@@ -60,7 +52,6 @@ class RTSPResolver implements IResolver<Integer, IResolver.IResolverCallback<Res
 
     @Override
     public void release() {
-        reader = null;
         resolverCallback = null;
     }
 
@@ -100,7 +91,7 @@ class RTSPResolver implements IResolver<Integer, IResolver.IResolverCallback<Res
          * @param sLine
          */
         public void resolve(String sLine) {
-            if ((currentStep & STEP_LINE) != 0 && sLine.startsWith(Version.PROTOCOL)) {//Line
+            if ((currentStep & STEP_LINE) != 0 && sLine.startsWith(Request.Version.PROTOCOL)) {//Line
                 Response.Line line = Response.Line.parse(sLine);
                 response.setLine(line);
                 currentStep = STEP_HEADER;

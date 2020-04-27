@@ -2,7 +2,6 @@ package io.chengguo.streaming.rtp;
 
 import java.io.DataInputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.nio.ByteBuffer;
 
 import io.chengguo.streaming.rtsp.IResolver;
@@ -13,23 +12,20 @@ import io.chengguo.streaming.rtsp.IResolver;
  */
 public class RTPResolver implements IResolver<Integer, IResolver.IResolverCallback<RtpPacket>> {
 
-    private DataInputStream inputStream;
     private IResolverCallback<RtpPacket> resolverCallback;
+
+    public RTPResolver() {
+    }
 
     public RTPResolver(IResolverCallback<RtpPacket> resolverCallback) {
         this.resolverCallback = resolverCallback;
     }
 
     @Override
-    public void regist(InputStream inputStream) {
-        this.inputStream = new DataInputStream(inputStream);
-    }
-
-    @Override
-    public void resolve(Integer rtpLength) throws IOException {
+    public void resolve(DataInputStream in, Integer rtpLength) throws IOException {
         System.out.println("RTP length: " + rtpLength);
         ByteBuffer buffer = ByteBuffer.allocate(rtpLength);
-        inputStream.readFully(buffer.array());
+        in.readFully(buffer.array());
         if (resolverCallback != null) {
             RtpPacket rtpPacket = RtpPacket.Resolver.resolve(buffer);
             resolverCallback.onResolve(rtpPacket);
@@ -43,7 +39,6 @@ public class RTPResolver implements IResolver<Integer, IResolver.IResolverCallba
 
     @Override
     public void release() {
-        inputStream = null;
         resolverCallback = null;
     }
 }

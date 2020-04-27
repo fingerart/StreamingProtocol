@@ -76,7 +76,7 @@ public class MainActivity extends Activity implements View.OnClickListener, RTSP
 
     private void createClient() {
         rtspClient = RTSPClient.create()
-                .host("10.0.2.2")
+                .host("14.29.172.223")
                 .transport(TransportMethod.TCP)
                 .setRTPPacketObserver(this)
                 .build();
@@ -101,7 +101,7 @@ public class MainActivity extends Activity implements View.OnClickListener, RTSP
     public void onClick(View v) {
         switch (v.getId()) {
             case R.id.btn_start:
-                rtspClient.play(URI.create("rtsp://10.0.2.2/bipbop-gear1-all.264"));
+                rtspClient.play(URI.create("rtsp://14.29.172.223/bipbop-gear1-all.264"));
                 break;
             case R.id.btn_stop:
                 rtspClient.pause();
