@@ -1,6 +1,7 @@
 package io.chengguo.streaming.rtsp.header;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import io.chengguo.streaming.utils.Utils;
 
@@ -48,9 +49,9 @@ public class TransportHeader extends StringHeader {
     private void deformat(String rawValue) {
         String[] items = rawValue.split(";");
         for (String item : items) {
-            if (item.startsWith(Specifier.UDP.description)) {
+            if (item.startsWith(UDP.description)) {
                 setSpecifier(UDP);
-            } else if (item.startsWith(Specifier.UDP.description)) {
+            } else if (item.startsWith(TCP.description)) {
                 setSpecifier(TCP);
             } else if (item.startsWith(BroadcastType.unicast.name())) {
                 setBroadcastType(BroadcastType.unicast);
@@ -181,13 +182,21 @@ public class TransportHeader extends StringHeader {
 
         public PairPort(String rawPairPort) {
             String[] pair = rawPairPort.split("-");
-            begin = Integer.valueOf(pair[0]);
-            end = Integer.valueOf(pair[1]);
+            begin = Integer.parseInt(pair[0]);
+            end = Integer.parseInt(pair[1]);
         }
 
         public PairPort(int begin, int end) {
             this.begin = begin;
             this.end = end;
+        }
+
+        @Override
+        public boolean equals(@Nullable Object other) {
+            if (other == this) {
+                return true;
+            }
+            return other instanceof PairPort && ((PairPort) other).begin == this.begin && ((PairPort) other).end == this.end;
         }
 
         @Override

@@ -31,7 +31,7 @@ public abstract class Header<V> {
             setName(nameOrRawHeader);
         } else {
             setName(nameOrRawHeader.substring(0, iSeparator));
-            setRawValue(parseValue(Utils.trimSafely(nameOrRawHeader.substring(iSeparator + 1))));
+            setRawValue(parseValue(nameOrRawHeader.substring(iSeparator + 1)));
         }
     }
 

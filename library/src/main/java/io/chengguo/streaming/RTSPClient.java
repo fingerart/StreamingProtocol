@@ -3,7 +3,6 @@ package io.chengguo.streaming;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
-import android.net.Uri;
 import android.util.Log;
 
 import java.net.URI;
@@ -26,47 +25,21 @@ import static io.chengguo.streaming.rtsp.header.TransportHeader.Specifier.TCP;
 /**
  * RTSPClient
  */
-public class RTSPClient implements ITransportListener {
+public class RTSPClient extends Observable<RTSPClient.IRTPPacketObserver> {
 
     private static final String TAG = RTSPClient.class.getSimpleName();
 
     private RTSPInterceptor mInterceptor;
-    private final RTPPacketReceiver mRtpPacketReceiver;
     private RTSPSession session;
     private String baseUri;
 
     public RTSPClient(Builder builder) {
         mInterceptor = builder.rtspInterceptor;
-        mRtpPacketReceiver = builder.rtpPacketReceiver;
+        registerObserver(builder.rtpPacketReceiver);
         session = new RTSPSession(builder.host, builder.port, builder.transportMethod);
-        session.setTransportListener(this);
-        session.setRTSPResolverCallback(new IResolver.IResolverCallback<Response>() {
-            @Override
-            public void onResolve(Response response) {
-                System.out.println("response = [" + response + "]");
-                if (response.getLine().isSuccessful()) {
-                    Request nextRequest = makeNextRequest(response);
-                    try {
-                        if (mInterceptor != null) {
-                            nextRequest = mInterceptor.onIntercept(nextRequest, response);
-                        }
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                    }
-                    if (nextRequest != null && nextRequest.getLine().getMethod() != null) {
-                        session.send(nextRequest);
-                    }
-                }
-            }
-        });
-        session.setRTPResolverCallback(new IResolver.IResolverCallback<RtpPacket>() {
-            @Override
-            public void onResolve(RtpPacket rtpPacket) {
-                if (mRtpPacketReceiver != null) {
-                    mRtpPacketReceiver.onReceive(rtpPacket);
-                }
-            }
-        });
+        session.setTransportListener(mTransportListener);
+        session.setRTSPResolverCallback(mRTSPResolverCallback);
+        session.setRTPResolverCallback(mRTPResolverCallback);
     }
 
     public void connect() {
@@ -119,27 +92,12 @@ public class RTSPClient implements ITransportListener {
         return session.isConnected();
     }
 
-    @Override
-    public void onConnected() {
-        System.out.println("RTSPClient.onConnected");
-    }
-
-    @Override
-    public void onConnectFail(Exception exception) {
-        System.out.println("exception = [" + exception + "]");
-    }
-
-    @Override
-    public void onDisconnected() {
-        System.out.println("RTSPClient.onDisconnected");
-    }
-
     private Request makeNextRequest(Response response) {
         Request.Builder builder = new Request.Builder();
-        Request preRequest = response.getRequest();
-        switch (preRequest.getLine().getMethod()) {
+        Request prevRequest = response.getRequest();
+        switch (prevRequest.getLine().getMethod()) {
             case OPTIONS:
-                builder.method(Method.DESCRIBE).uri(preRequest.getLine().getUri());
+                builder.method(Method.DESCRIBE).uri(prevRequest.getLine().getUri());
                 break;
             case DESCRIBE:
                 Header<String> base = response.getHeader("Content-Base");
@@ -162,6 +120,59 @@ public class RTSPClient implements ITransportListener {
         return builder.build();
     }
 
+    private final ITransportListener mTransportListener = new ITransportListener() {
+        @Override
+        public void onConnected() {
+            for (IRTPPacketObserver observer : mObservers) {
+                observer.onConnected();
+            }
+        }
+
+        @Override
+        public void onConnectFail(Exception exception) {
+            for (IRTPPacketObserver observer : mObservers) {
+                observer.onConnectFail(exception);
+            }
+        }
+
+        @Override
+        public void onDisconnected() {
+            for (IRTPPacketObserver observer : mObservers) {
+                observer.onDisconnected();
+            }
+        }
+
+    };
+
+    private final IResolver.IResolverCallback<RtpPacket> mRTPResolverCallback = new IResolver.IResolverCallback<RtpPacket>() {
+        @Override
+        public void onResolve(RtpPacket rtpPacket) {
+            for (IRTPPacketObserver observer : mObservers) {
+                observer.onReceive(rtpPacket);
+            }
+        }
+    };
+
+    private final IResolver.IResolverCallback<Response> mRTSPResolverCallback = new IResolver.IResolverCallback<Response>() {
+        @Override
+        public void onResolve(Response response) {
+            System.out.println("response = [" + response + "]");
+            if (response.getLine().isSuccessful()) {
+                Request nextRequest = makeNextRequest(response);
+                try {
+                    if (mInterceptor != null) {
+                        nextRequest = mInterceptor.onIntercept(nextRequest, response);
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+                if (nextRequest != null && nextRequest.getLine().getMethod() != null) {
+                    session.send(nextRequest);
+                }
+            }
+        }
+    };
+
     public static Builder create() {
         return new Builder();
     }
@@ -172,7 +183,7 @@ public class RTSPClient implements ITransportListener {
         private int port = 554;
         private TransportMethod transportMethod = TransportMethod.TCP;
         private RTSPInterceptor rtspInterceptor;
-        private RTPPacketReceiver rtpPacketReceiver;
+        private IRTPPacketObserver rtpPacketReceiver;
 
         public Builder host(String host) {
             this.host = host;
@@ -194,8 +205,8 @@ public class RTSPClient implements ITransportListener {
             return this;
         }
 
-        public Builder setRTPPacketReciver(RTPPacketReceiver rtpPacketReceiver) {
-            this.rtpPacketReceiver = rtpPacketReceiver;
+        public Builder setRTPPacketObserver(IRTPPacketObserver rtpPacketObserver) {
+            this.rtpPacketReceiver = rtpPacketObserver;
             return this;
         }
 
@@ -208,7 +219,32 @@ public class RTSPClient implements ITransportListener {
         Request onIntercept(@Nullable Request nextRequest, @NonNull Response preResponse);
     }
 
-    public interface RTPPacketReceiver {
+    public interface IRTPPacketObserver {
+        void onConnected();
+
+        void onConnectFail(Exception exception);
+
+        void onDisconnected();
+
         void onReceive(RtpPacket rtpPacket);
+    }
+
+    public class RTPPacketObserver implements IRTPPacketObserver {
+
+        @Override
+        public void onConnected() {
+        }
+
+        @Override
+        public void onConnectFail(Exception exception) {
+        }
+
+        @Override
+        public void onDisconnected() {
+        }
+
+        @Override
+        public void onReceive(RtpPacket rtpPacket) {
+        }
     }
 }

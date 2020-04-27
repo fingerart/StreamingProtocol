@@ -2,6 +2,7 @@ package io.chengguo.streaming.rtsp.header;
 
 import org.junit.Test;
 
+import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.*;
 
 /**
@@ -10,17 +11,17 @@ import static org.junit.Assert.*;
 public class RangHeaderTest {
 
     @Test
-    public void testConstructor() throws Exception {
+    public void testConstructor_string() {
         RangeHeader header = new RangeHeader("Range: npt=0.000-107.234");
-        assertEquals("比较Begin相等", 0, header.getBegin(), 0);
-        assertEquals("比较End相等", 107.234, header.getEnd(), 0);
-        assertTrue(RangeHeader.TimeUnit.NPT == header.getTimeUnit());
+        assertThat(header.getBegin(), is((double) 0));
+        assertThat(header.getEnd(), is(107.234));
+        assertThat(header.getTimeUnit(), is(RangeHeader.TimeUnit.NPT));
     }
 
     @Test
-    public void setEnd() throws Exception {
+    public void testConstructor_value() {
         RangeHeader header = new RangeHeader(2, 257.23);
-        assertEquals("Range: npt=2.000-257.230", header.toString());
+        assertThat(header.toString(), is("Range: npt=2.000-257.230"));
     }
 
 }

@@ -7,7 +7,6 @@ import android.os.Build;
 import android.os.Bundle;
 
 import androidx.annotation.RequiresApi;
-import androidx.appcompat.app.AppCompatActivity;
 
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
@@ -23,7 +22,7 @@ import io.chengguo.streaming.rtp.RtpPacket;
 import io.chengguo.streaming.transport.TransportMethod;
 
 @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
-public class MainActivity extends Activity implements View.OnClickListener, RTSPClient.RTPPacketReceiver, Mp3Decoder.Callback {
+public class MainActivity extends Activity implements View.OnClickListener, RTSPClient.IRTPPacketObserver, Mp3Decoder.Callback {
 
     private static final String TAG = "MainActivity";
 
@@ -79,7 +78,7 @@ public class MainActivity extends Activity implements View.OnClickListener, RTSP
         rtspClient = RTSPClient.create()
                 .host("14.29.172.223")
                 .transport(TransportMethod.TCP)
-                .setRTPPacketReciver(this)
+                .setRTPPacketObserver(this)
                 .build();
     }
 

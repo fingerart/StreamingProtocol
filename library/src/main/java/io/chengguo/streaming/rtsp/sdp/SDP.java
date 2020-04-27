@@ -46,7 +46,6 @@ class SDP implements ISerializer {
      * Session Attribute (a): range
      */
     private String range;
-
     /**
      * Media Description, name and address (m): video 0 RTP/AVP 96
      */
@@ -121,7 +120,7 @@ class SDP implements ISerializer {
         if ("v".equals(shortField)) {
             version = Integer.parseInt(content);
         } else if ("o".equals(shortField)) {
-            this.owner = parseOwner(content);
+            owner = parseOwner(content);
         } else if ("i".equals(shortField)) {
             sessionInfo = content;
         } else if ("s".equals(shortField)) {
@@ -136,6 +135,7 @@ class SDP implements ISerializer {
     }
 
     private void parseActiveTime(String content) {
+        // t=0 0
         String[] times = content.split(" ");
         if (times.length == 2) {
             sessionTimeStart = Long.parseLong(times[0]);
@@ -156,7 +156,7 @@ class SDP implements ISerializer {
                 type = attrValue;
             } else if ("range".equals(attrName)) {
                 range = attrValue;
-            }else {
+            } else {
                 parseAttr(attrName, attrValue);
             }
         }
@@ -167,6 +167,7 @@ class SDP implements ISerializer {
 
     @NonNull
     private MediaDescription parseMediaDes(String content) {
+        // m=video 0 RTP/AVP 96
         MediaDescription md = new MediaDescription();
         String[] values = content.split(" ");
         for (int i = 0; i < values.length; i++) {

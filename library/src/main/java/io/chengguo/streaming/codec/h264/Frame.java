@@ -4,9 +4,9 @@ public class Frame {
     public Type type;
 
     public static class Type {
-        int forbidden;
-        int refIdc;
-        int type;
+        public int forbidden;
+        public int refIdc;
+        public int type;
 
         public Type(byte b) {
             forbidden = b >> 7;

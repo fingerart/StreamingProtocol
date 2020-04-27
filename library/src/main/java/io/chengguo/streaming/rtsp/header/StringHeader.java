@@ -36,6 +36,6 @@ public class StringHeader extends Header<String> {
 
     @Override
     protected String parseValue(String value) {
-        return value;
+        return Utils.trimSafely(value);
     }
 }

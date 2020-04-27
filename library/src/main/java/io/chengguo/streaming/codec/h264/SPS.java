@@ -9,7 +9,7 @@ public class SPS extends Frame {
 
     public int profileIdc;
     public int width;
-    private int height;
+    public int height;
 
     public static boolean itsMine(byte first) {
         int type = first & 0x1F;
