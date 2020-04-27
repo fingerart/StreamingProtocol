@@ -2,7 +2,9 @@ package io.chengguo.streaming.rtsp;
 
 import androidx.annotation.NonNull;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import io.chengguo.streaming.rtcp.RTCPResolver;
@@ -32,9 +34,9 @@ public class RTSPSession {
     private ITransport transport;
     private String session;
     private AtomicInteger sequence = new AtomicInteger();
-    private HashMap<Integer, Request> requestList = new HashMap<>();
     private IResolver.IResolverCallback<Response> mRtspResolverCallback;
     private IResolver.IResolverCallback<RtpPacket> mRtpResolverCallback;
+    private List<Interceptor> mInterceptors = new ArrayList();
 
     public RTSPSession(String host, int port, TransportMethod method) {
         this.host = host;
@@ -146,12 +148,17 @@ public class RTSPSession {
         }
         request.addHeader(new UserAgentHeader("ChengGuo Live"));
         StringBuilder sb = new StringBuilder();
-        sb.append(">----------------------- ").append(request.getLine().getMethod()).append("\r\n")
+        sb.append(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>").append(request.getLine().getMethod()).append("\r\n")
                 .append(request.toString())
-                .append(">----------------------- ").append(request.getLine().getMethod());
+                .append(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>> ").append(request.getLine().getMethod());
         System.out.println(sb);
         //暂存Request
         requestList.put(cseq, request);
+
+        for (Interceptor interceptor : mInterceptors) {
+            request = interceptor.onSend(request);
+        }
+
         //发送请求
         transport.send(request);
     }
@@ -172,5 +179,13 @@ public class RTSPSession {
         if (isConnected()) {
             transport.disconnect();
         }
+    }
+
+    public void addInterceptor(Interceptor interceptor) {
+        mInterceptors.add(interceptor);
+    }
+
+    public void removeInterceptor(Interceptor interceptor){
+        mInterceptors.remove(interceptor);
     }
 }
