@@ -34,6 +34,7 @@ public class RTSPSession {
     private ITransport transport;
     private String session;
     private AtomicInteger sequence = new AtomicInteger();
+    private HashMap<Integer, Request> requestList = new HashMap<>();
     private IResolver.IResolverCallback<Response> mRtspResolverCallback;
     private IResolver.IResolverCallback<RtpPacket> mRtpResolverCallback;
     private List<Interceptor> mInterceptors = new ArrayList();

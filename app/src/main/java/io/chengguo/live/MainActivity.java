@@ -110,6 +110,21 @@ public class MainActivity extends Activity implements View.OnClickListener, RTSP
     }
 
     @Override
+    public void onConnected() {
+
+    }
+
+    @Override
+    public void onConnectFail(Exception exception) {
+
+    }
+
+    @Override
+    public void onDisconnected() {
+
+    }
+
+    @Override
     public void onReceive(RtpPacket rtpPacket) {
         try {
 //            mp3Decoder.input(rtpPacket.getPayload(), 0, rtpPacket.getPayload().length, rtpPacket.getTimestamp());
