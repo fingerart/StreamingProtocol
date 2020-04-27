@@ -58,7 +58,7 @@ public class TCPTransport implements ITransport {
         while ((firstByte = in.readUnsignedByte()) > 0) {
             L.d("First Byte: " + firstByte);
             //'$' beginning is the RTP and RTCP
-            if (firstByte == 36) {
+            if (firstByte == 36) {//0x24
                 int secondByte = in.readUnsignedByte();
                 //channel is rtp
                 if (secondByte == 0) {

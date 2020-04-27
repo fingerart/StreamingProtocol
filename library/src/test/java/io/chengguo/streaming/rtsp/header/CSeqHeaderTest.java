@@ -2,6 +2,7 @@ package io.chengguo.streaming.rtsp.header;
 
 import org.junit.Test;
 
+import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.*;
 
 /**
@@ -10,14 +11,14 @@ import static org.junit.Assert.*;
 public class CSeqHeaderTest {
 
     @Test
-    public void testConstructor() throws Exception {
+    public void testConstructor_nameOrRaw() {
         CSeqHeader header = new CSeqHeader("CSeq: 6");
-        assertTrue(6 == header.getRawValue());
+        assertThat(header.getRawValue(), is(6));
     }
 
     @Test
-    public void test() throws Exception {
+    public void testConstructor_value() {
         CSeqHeader header = new CSeqHeader(1);
-        assertTrue(1 == header.getRawValue());
+        assertThat(header.getRawValue(), is(1));
     }
 }

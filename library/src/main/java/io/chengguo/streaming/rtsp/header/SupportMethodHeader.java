@@ -22,6 +22,7 @@ public class SupportMethodHeader extends StringHeader {
 
     public SupportMethodHeader(String name, String value) {
         super(name, value);
+        parseMethods(getRawValue());
     }
 
     public SupportMethodHeader(@NonNull String nameOrRawHeader) {
@@ -34,12 +35,6 @@ public class SupportMethodHeader extends StringHeader {
         this.methods.addAll(Arrays.asList(methods));
     }
 
-    @Override
-    public void setRawValue(String rawValue) {
-        super.setRawValue(rawValue);
-        parseMethods(getRawValue());
-    }
-
     /**
      * 解析成Method
      */
@@ -49,7 +44,6 @@ public class SupportMethodHeader extends StringHeader {
             try {
                 methods.add(Method.valueOf(trimSafely(methodStr)));
             } catch (Exception ignored) {
-                L.w(ignored.getMessage());
             }
         }
     }

@@ -41,6 +41,7 @@ public class H264SDP extends SDP {
 
     @Override
     public String toString() {
+        super.toString();
         return "H264SDP{" +
                 "mimeType='" + mimeType + '\'' +
                 ", sampleRate=" + sampleRate +

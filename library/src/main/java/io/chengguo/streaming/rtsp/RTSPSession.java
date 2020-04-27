@@ -40,11 +40,7 @@ public class RTSPSession {
         this.host = host;
         this.port = port;
         this.method = method;
-        setCallbacks();
-    }
-
-    private void setCallbacks() {
-        transport = method.createTransport(host, port, 3000);
+        transport = this.method.createTransport(this.host, this.port, 3000);
         transport.setRtspResolver(new RTSPResolver(createWrapRtspResolver()));
         transport.setRtpResolver(new RTPResolver(createWrapRtpResolver()));
         transport.setRtcpResolver(new RTCPResolver(createWrapRtcpResolver()));

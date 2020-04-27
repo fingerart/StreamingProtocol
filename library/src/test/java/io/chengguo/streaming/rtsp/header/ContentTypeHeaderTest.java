@@ -11,18 +11,18 @@ public class ContentTypeHeaderTest {
     ContentTypeHeader header;
 
     @Before
-    public void setUp() throws Exception {
+    public void setUp() {
         header = new ContentTypeHeader(ContentTypeHeader.Type.SDP);
     }
 
     @Test
-    public void testConstructor() throws Exception {
+    public void testConstructor() {
         ContentTypeHeader headerByStr = new ContentTypeHeader("Content-Type: application/sdp");
         Assert.assertEquals(headerByStr, header);
     }
 
     @Test
-    public void isSupportType() throws Exception {
+    public void testIsSupportType() {
         Assert.assertTrue(header.isSupportType(ContentTypeHeader.Type.SDP));
     }
 

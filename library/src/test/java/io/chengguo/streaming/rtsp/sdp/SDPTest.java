@@ -1,17 +1,14 @@
 package io.chengguo.streaming.rtsp.sdp;
 
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.junit.MockitoJUnitRunner;
 
-import java.nio.ByteBuffer;
-import java.util.Base64;
-
-import io.chengguo.streaming.codec.h264.SPS;
-import io.chengguo.streaming.utils.Bits;
-
+@RunWith(MockitoJUnitRunner.class)
 public class SDPTest {
 
     @Test
-    public void from() {
+    public void testFrom() {
         String input = "v=0\r\n" +
                 "o=- 1567231587249627 1 IN IP4 172.17.0.2\r\n" +
                 "s=H.264 Video, streamed by the LIVE555 Media Server\r\n" +
@@ -29,16 +26,8 @@ public class SDPTest {
                 "a=rtpmap:96 H264/90000\r\n" +
                 "a=fmtp:96 packetization-mode=1;profile-level-id=42E00B;sprop-parameter-sets=J0LgC6kYYJ2ANQYBBrbCte98BA==,KN4JiA==\r\n" +
                 "a=control:track1\r\n";
-        SDP sdp = new H264SDP();
+        H264SDP sdp = new H264SDP();
         sdp.from(input);
         System.out.println(sdp);
-    }
-
-    @Test
-    public void testBase() {
-        byte[] spsBytes = Base64.getDecoder().decode("Z00AHp2oKA9puAgICBA=");
-        System.out.println(Bits.dumpBytesToHex(spsBytes));
-        SPS sps = SPS.valueOf(ByteBuffer.wrap(spsBytes));
-        System.out.println(sps);
     }
 }
