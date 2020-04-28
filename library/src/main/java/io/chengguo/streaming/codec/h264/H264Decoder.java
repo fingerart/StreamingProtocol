@@ -193,7 +193,7 @@ public class H264Decoder extends Decoder {
      */
     private void intoDecoder(byte[] frame) {
         int index;
-        if (((index = mediaCodec.dequeueInputBuffer(10)) >= 0)) {
+        if ((index = mediaCodec.dequeueInputBuffer(-1)) >= 0) {
             Log.d(TAG, "input.dequeue [" + index + "] \r\n" + Bits.dumpBytesToHex(frame));
             ByteBuffer inputBuffer = codecInputBuffers[index];
             inputBuffer.clear();

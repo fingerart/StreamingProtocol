@@ -1,11 +1,12 @@
 package io.chengguo.streaming.rtsp;
 
+import androidx.annotation.NonNull;
+
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import androidx.annotation.NonNull;
 import io.chengguo.streaming.rtcp.RTCPResolver;
 import io.chengguo.streaming.rtcp.ReceiverReport;
 import io.chengguo.streaming.rtcp.SenderReport;
@@ -51,11 +52,36 @@ public class RTSPSession {
         this.method = method;
         transport = this.method.createTransport(this.host, this.port, timeout);
         transport.setTransportListener(new RTSPTransportListenerWrapper(
-                mSessionStateObserver,
+                createStateObserver(),
                 createRTSPResolver(),
                 createRTPResolver(),
                 createRTCPResolver()
         ));
+    }
+
+    private ISessionStateObserver createStateObserver() {
+        return new ISessionStateObserver() {
+            @Override
+            public void onConnected() {
+                if (mSessionStateObserver != null) {
+                    mSessionStateObserver.onConnected();
+                }
+            }
+
+            @Override
+            public void onConnectFailure(Throwable throwable) {
+                if (mSessionStateObserver != null) {
+                    mSessionStateObserver.onConnectFailure(throwable);
+                }
+            }
+
+            @Override
+            public void onDisconnected() {
+                if (mSessionStateObserver != null) {
+                    mSessionStateObserver.onDisconnected();
+                }
+            }
+        };
     }
 
     @NonNull
@@ -74,18 +100,11 @@ public class RTSPSession {
                 if (sessionHeader != null) {
                     session = sessionHeader.getSession();
                 }
-                for (IInterceptor Interceptor : mInterceptors) {
-                    Interceptor.onResponse(response);
+                for (IInterceptor interceptor : mInterceptors) {
+                    interceptor.onResponse(response);
                 }
                 if (response.getLine().isSuccessful()) {
                     Request nextRequest = makeNextRequest(response);
-                    try {
-                        for (IInterceptor Interceptor : mInterceptors) {
-                            nextRequest = Interceptor.onSend(nextRequest, response);
-                        }
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                    }
                     if (nextRequest != null && nextRequest.getLine().getMethod() != null) {
                         send(nextRequest);
                     }
@@ -193,12 +212,13 @@ public class RTSPSession {
                 .append(request.toString())
                 .append(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>> ").append(request.getLine().getMethod());
         System.out.println(sb);
-        //暂存Request
-        requestList.put(cseq, request);
 
         for (IInterceptor Interceptor : mInterceptors) {
             request = Interceptor.onSend(request, null);
         }
+
+        //暂存Request
+        requestList.put(cseq, request);
 
         //发送请求
         transport.send(request);
@@ -222,9 +242,9 @@ public class RTSPSession {
         }
     }
 
-    public void addInterceptor(IInterceptor Interceptor) {
-        if (Interceptor != null && !mInterceptors.contains(Interceptor)) {
-            mInterceptors.add(Interceptor);
+    public void addInterceptor(IInterceptor interceptor) {
+        if (interceptor != null && !mInterceptors.contains(interceptor)) {
+            mInterceptors.add(interceptor);
         }
     }
 

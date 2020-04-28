@@ -24,14 +24,14 @@ public class TCPTransport extends TransportImpl {
     public TCPTransport(String hostname, int port, int timeout) {
         this.timeout = timeout;
         address = new InetSocketAddress(hostname, port);
-        socket = new Socket();
     }
 
     @Override
     public DataInputStream connectSync() throws IOException {
         if (isConnected()) {
-            throw new IllegalStateException("TCP is connected.");
+            throw new IllegalStateException("TCP is connected");
         }
+        socket = new Socket();
         socket.connect(address, timeout);
         inputStream = socket.getInputStream();
         outputStream = socket.getOutputStream();
@@ -59,7 +59,7 @@ public class TCPTransport extends TransportImpl {
 
     @Override
     public boolean isConnected() {
-        return socket != null && socket.isConnected();
+        return socket != null && socket.isConnected() && !socket.isClosed();
     }
 
     @Override
@@ -68,7 +68,7 @@ public class TCPTransport extends TransportImpl {
     }
 
     @Override
-    public void send(final IMessage message, final MessageCallback callback) {
+    public void send(final IMessage message, final SendCallback callback) {
         if (message == null) {
             if (callback != null) {
                 callback.onFailure(new IllegalArgumentException("Message is null"));
@@ -76,15 +76,15 @@ public class TCPTransport extends TransportImpl {
             return;
         }
         final byte[] raw = message.toRaw();
-        if (raw.length==0) {
+        if (raw.length == 0) {
             if (callback != null) {
                 callback.onFailure(new IllegalArgumentException("Message is empty"));
             }
             return;
         }
-        if (!isOutputShutdown()) {
+        if (!isConnected()) {
             if (callback != null) {
-                callback.onFailure(new IllegalStateException("Output is Shutdown"));
+                callback.onFailure(new IllegalStateException("TCP is disconnected"));
             }
             return;
         }
@@ -92,13 +92,11 @@ public class TCPTransport extends TransportImpl {
             @Override
             public void run() {
                 try {
-                    if (!isOutputShutdown()) {
+                    synchronized (TCPTransport.this) {
                         outputStream.write(raw);
-                        if (callback != null) {
-                            callback.onSuccess();
-                        }
-                    } else {
-                        throw new IllegalStateException("Output is Shutdown");
+                    }
+                    if (callback != null) {
+                        callback.onSuccess();
                     }
                 } catch (Exception e) {
                     if (callback != null) {
@@ -109,17 +107,12 @@ public class TCPTransport extends TransportImpl {
         });
     }
 
-    private boolean isOutputShutdown() {
-        return socket == null || socket.isOutputShutdown();
-    }
-
     @Override
     public void disconnect() {
         try {
             socket.close();
+            socket = null;
         } catch (IOException ignore) {
-        } finally {
-            dispatchOnDisconnected();
         }
     }
 }
