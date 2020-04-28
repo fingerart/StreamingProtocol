@@ -52,6 +52,17 @@ public class RTSPClient extends Observable<RTSPClient.IRTPPacketObserver> {
         session.send(request);
     }
 
+    public void resume() {
+        if (!isConnected()) {
+            Log.e(TAG, "session is not connection");
+            return;
+        }
+        Request request = new Request.Builder()
+                .method(Method.PLAY)
+                .build();
+        session.send(request);
+    }
+
     public void pause() {
         if (!isConnected()) {
             Log.e(TAG, "session is not connection");

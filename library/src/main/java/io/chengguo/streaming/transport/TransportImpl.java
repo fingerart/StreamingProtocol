@@ -19,7 +19,7 @@ public abstract class TransportImpl {
 
     public abstract void send(IMessage message);
 
-    public abstract void send(IMessage message, MessageCallback callback);
+    public abstract void send(IMessage message, SendCallback callback);
 
     public void setTransportListener(ITransportListener transportListener) {
         mTransportListener = transportListener;

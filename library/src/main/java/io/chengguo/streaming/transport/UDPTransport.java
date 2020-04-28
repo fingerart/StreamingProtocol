@@ -33,7 +33,7 @@ public class UDPTransport extends TransportImpl {
     }
 
     @Override
-    public void send(IMessage message, MessageCallback callback) {
+    public void send(IMessage message, SendCallback callback) {
 
     }
 }

@@ -1,6 +1,6 @@
 package io.chengguo.streaming.transport;
 
-public interface MessageCallback {
+public interface SendCallback {
     void onSuccess();
 
     void onFailure(Throwable throwable);
