@@ -3,8 +3,6 @@ package io.chengguo.streaming.transport;
 import java.io.DataInputStream;
 import java.io.IOException;
 
-import io.chengguo.streaming.rtsp.IMessage;
-
 /**
  * Created by fingerart on 2018-09-08.
  */

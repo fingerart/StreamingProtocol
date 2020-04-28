@@ -18,6 +18,7 @@ import io.chengguo.streaming.rtsp.header.SessionHeader;
 import io.chengguo.streaming.rtsp.header.TransportHeader;
 import io.chengguo.streaming.rtsp.header.UserAgentHeader;
 import io.chengguo.streaming.rtsp.sdp.H264SDP;
+import io.chengguo.streaming.transport.IMessage;
 import io.chengguo.streaming.transport.TransportImpl;
 import io.chengguo.streaming.transport.TransportMethod;
 import io.chengguo.streaming.utils.Utils;
@@ -42,17 +43,23 @@ public class RTSPSession {
     private HashMap<Integer, Request> requestList = new HashMap<>();
     private IResolver.IResolverCallback<RtpPacket> mRtpResolverCallback;
     private ArrayList<IInterceptor> mInterceptors = new ArrayList();
+    private ISessionStateObserver mSessionStateObserver;
 
-    public RTSPSession(String host, int port, TransportMethod method) {
+    public RTSPSession(String host, int port, int timeout, TransportMethod method) {
         this.host = host;
         this.port = port;
         this.method = method;
-        transport = this.method.createTransport(this.host, this.port, 3000);
-        transport.setTransportListener(new RTSPTransportListenerWrapper(createWrapRtspResolver(), createWrapRtpBridge(), createWrapRtcpResolver()));
+        transport = this.method.createTransport(this.host, this.port, timeout);
+        transport.setTransportListener(new RTSPTransportListenerWrapper(
+                mSessionStateObserver,
+                createRTSPResolver(),
+                createRTPResolver(),
+                createRTCPResolver()
+        ));
     }
 
     @NonNull
-    private IResolver.IResolverCallback<Response> createWrapRtspResolver() {
+    private IResolver.IResolverCallback<Response> createRTSPResolver() {
         return new IResolver.IResolverCallback<Response>() {
             @Override
             public void onResolve(Response response) {
@@ -80,7 +87,7 @@ public class RTSPSession {
                         e.printStackTrace();
                     }
                     if (nextRequest != null && nextRequest.getLine().getMethod() != null) {
-                        transport.send(nextRequest);
+                        send(nextRequest);
                     }
                 }
             }
@@ -88,7 +95,7 @@ public class RTSPSession {
     }
 
     @NonNull
-    private IResolver.IResolverCallback<RtpPacket> createWrapRtpBridge() {
+    private IResolver.IResolverCallback<RtpPacket> createRTPResolver() {
         return new IResolver.IResolverCallback<RtpPacket>() {
             @Override
             public void onResolve(RtpPacket rtpPacket) {
@@ -98,11 +105,11 @@ public class RTSPSession {
     }
 
     @NonNull
-    private RTCPResolver.RTCPResolverListener createWrapRtcpResolver() {
+    private RTCPResolver.RTCPResolverListener createRTCPResolver() {
         return new RTCPResolver.RTCPResolverListener() {
             @Override
             public void onSenderReport(SenderReport senderReport) {
-                System.out.println(senderReport);
+                System.out.println("RTSPSession.onSenderReport: " + "senderReport = [" + senderReport + "]");
                 RtspPacket rtspPacket = new RtspPacket(0x01, new IMessage[]{new ReceiverReport(8888)});
                 transport.send(rtspPacket);
             }
@@ -123,10 +130,10 @@ public class RTSPSession {
         Request.Builder builder = new Request.Builder();
         Request prevRequest = response.getRequest();
         switch (prevRequest.getLine().getMethod()) {
-            case OPTIONS:
+            case OPTIONS:// next is describe
                 builder.method(Method.DESCRIBE).uri(prevRequest.getLine().getUri());
                 break;
-            case DESCRIBE:
+            case DESCRIBE:// next is setup
                 Header<String> base = response.getHeader("Content-Base");
                 baseUri = base.getRawValue();
                 H264SDP sdp = new H264SDP();
@@ -137,12 +144,17 @@ public class RTSPSession {
                         .build();
                 builder.method(Method.SETUP).uri(URI.create(baseUri + sdp.getMediaControl())).addHeader(header);
                 break;
-            case SETUP:
+            case SETUP:// next is play
                 builder.method(Method.PLAY).addHeader(new RangeHeader(0)).uri(baseUri);
                 break;
-            case PLAY:
+            case PLAY:// not replay
+            case TEARDOWN:
+            case PAUSE:
+            case GET_PARAMETER:
+            case SET_PARAMETER:
+            case RECORD:
             default:
-                return null;//Not replay
+                return null;
         }
         return builder.build();
     }
@@ -156,7 +168,7 @@ public class RTSPSession {
      *
      * @param rtpResolverCallback
      */
-    public void setRTPResolverCallback(IResolver.IResolverCallback<RtpPacket> rtpResolverCallback) {
+    public void setRTPResolverObserver(IResolver.IResolverCallback<RtpPacket> rtpResolverCallback) {
         mRtpResolverCallback = rtpResolverCallback;
     }
 
@@ -172,6 +184,10 @@ public class RTSPSession {
             request.addHeader(new SessionHeader(session, 0));
         }
         request.addHeader(new UserAgentHeader("ChengGuo Live"));
+        if (request.getLine().getUri() == null && !Utils.isEmpty(baseUri)) {
+            request.getLine().setUri(URI.create(baseUri));
+        }
+
         StringBuilder sb = new StringBuilder();
         sb.append(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>").append(request.getLine().getMethod()).append("\r\n")
                 .append(request.toString())
@@ -216,5 +232,9 @@ public class RTSPSession {
         if (Interceptor != null) {
             mInterceptors.remove(Interceptor);
         }
+    }
+
+    public void setStateObserver(ISessionStateObserver sessionStateObserver) {
+        mSessionStateObserver = sessionStateObserver;
     }
 }

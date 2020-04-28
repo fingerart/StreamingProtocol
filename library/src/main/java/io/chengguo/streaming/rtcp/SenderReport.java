@@ -90,37 +90,37 @@ public class SenderReport implements IPacket {
     }
 
 
-        public static SenderReport of(ByteBuffer buffer) {
-            SenderReport senderReport = new SenderReport();
-            byte vpc = buffer.get();
-            senderReport.version = vpc >> 6 & 0x3;
-            senderReport.padding = (vpc >> 5 & 0x1) == 1;
-            senderReport.counter = vpc & 0x1f;
-            senderReport.pt = buffer.get() & 0xff;
-            senderReport.length = buffer.getShort();
-            senderReport.ssrc = getLongByInt(buffer);
-            senderReport.ntpMsw = getLongByInt(buffer);
-            senderReport.ntpLsw = getLongByInt(buffer);
-            senderReport.rtpTimestamp = getLongByInt(buffer);
-            senderReport.packetCount = getLongByInt(buffer);
-            senderReport.octetCount = getLongByInt(buffer);
+    public static SenderReport of(ByteBuffer buffer) {
+        SenderReport senderReport = new SenderReport();
+        byte vpc = buffer.get();
+        senderReport.version = vpc >> 6 & 0x3;
+        senderReport.padding = (vpc >> 5 & 0x1) == 1;
+        senderReport.counter = vpc & 0x1f;
+        senderReport.pt = buffer.get() & 0xff;
+        senderReport.length = buffer.getShort();
+        senderReport.ssrc = getLongByInt(buffer);
+        senderReport.ntpMsw = getLongByInt(buffer);
+        senderReport.ntpLsw = getLongByInt(buffer);
+        senderReport.rtpTimestamp = getLongByInt(buffer);
+        senderReport.packetCount = getLongByInt(buffer);
+        senderReport.octetCount = getLongByInt(buffer);
 
-            //report block
-            senderReport.reportBlocks = new ArrayList<>();
-            for (int i = 0; i < senderReport.counter; i++) {
-                ReportBlock reportBlock = new ReportBlock();
-                reportBlock.identifier = getLongByInt(buffer);
-                reportBlock.fractionLost = buffer.get() & 0xff;
-                byte[] numberOfPacketsLostArr = new byte[3];
-                buffer.get(numberOfPacketsLostArr);
-                reportBlock.numberOfPacketsLost = Bits.byteArrayToInt(numberOfPacketsLostArr);
-                reportBlock.exHighestNumber = getLongByInt(buffer);
-                reportBlock.interarrivalJitter = getLongByInt(buffer);
-                reportBlock.lastSR = getLongByInt(buffer);
-                reportBlock.delayLastSR = getLongByInt(buffer);
-                senderReport.reportBlocks.add(reportBlock);
-            }
-
-            return senderReport;
+        //report block
+        senderReport.reportBlocks = new ArrayList<>();
+        for (int i = 0; i < senderReport.counter; i++) {
+            ReportBlock reportBlock = new ReportBlock();
+            reportBlock.identifier = getLongByInt(buffer);
+            reportBlock.fractionLost = buffer.get() & 0xff;
+            byte[] numberOfPacketsLostArr = new byte[3];
+            buffer.get(numberOfPacketsLostArr);
+            reportBlock.numberOfPacketsLost = Bits.byteArrayToInt(numberOfPacketsLostArr);
+            reportBlock.exHighestNumber = getLongByInt(buffer);
+            reportBlock.interarrivalJitter = getLongByInt(buffer);
+            reportBlock.lastSR = getLongByInt(buffer);
+            reportBlock.delayLastSR = getLongByInt(buffer);
+            senderReport.reportBlocks.add(reportBlock);
         }
+
+        return senderReport;
+    }
 }

@@ -20,7 +20,7 @@ package io.chengguo.streaming.rtcp;
 
 import java.nio.ByteBuffer;
 
-import io.chengguo.streaming.rtsp.IMessage;
+import io.chengguo.streaming.transport.IMessage;
 import io.chengguo.streaming.utils.Bits;
 
 /**

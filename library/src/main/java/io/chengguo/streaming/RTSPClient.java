@@ -1,26 +1,17 @@
 package io.chengguo.streaming;
 
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-
 import android.util.Log;
 
 import java.net.URI;
 
 import io.chengguo.streaming.rtp.RtpPacket;
+import io.chengguo.streaming.rtsp.IInterceptor;
 import io.chengguo.streaming.rtsp.IResolver;
-import io.chengguo.streaming.rtsp.ITransportListener;
+import io.chengguo.streaming.rtsp.ISessionStateObserver;
 import io.chengguo.streaming.rtsp.Method;
 import io.chengguo.streaming.rtsp.RTSPSession;
 import io.chengguo.streaming.rtsp.Request;
-import io.chengguo.streaming.rtsp.Response;
-import io.chengguo.streaming.rtsp.header.Header;
-import io.chengguo.streaming.rtsp.header.RangeHeader;
-import io.chengguo.streaming.rtsp.header.TransportHeader;
-import io.chengguo.streaming.rtsp.sdp.H264SDP;
 import io.chengguo.streaming.transport.TransportMethod;
-
-import static io.chengguo.streaming.rtsp.header.TransportHeader.Specifier.TCP;
 
 /**
  * RTSPClient
@@ -32,11 +23,11 @@ public class RTSPClient extends Observable<RTSPClient.IRTPPacketObserver> {
     private RTSPSession session;
 
     public RTSPClient(Builder builder) {
-        mInterceptor = builder.rtspInterceptor;
         registerObserver(builder.rtpPacketReceiver);
-        session = new RTSPSession(builder.host, builder.port, builder.transportMethod);
-        session.setObserver(mTransportListener);
-        session.setRTPResolverCallback(mRTPResolverCallback);
+        session = new RTSPSession(builder.host, builder.port, builder.timeout, builder.transportMethod);
+        session.addInterceptor(builder.rtspInterceptor);
+        session.setStateObserver(mTransportListener);
+        session.setRTPResolverObserver(mRTPResolverCallback);
     }
 
     public void connect() {
@@ -68,7 +59,6 @@ public class RTSPClient extends Observable<RTSPClient.IRTPPacketObserver> {
         }
         Request stop = new Request.Builder()
                 .method(Method.PAUSE)
-                .uri(baseUri)
                 .build();
         session.send(stop);
     }
@@ -80,16 +70,23 @@ public class RTSPClient extends Observable<RTSPClient.IRTPPacketObserver> {
         }
         Request stop = new Request.Builder()
                 .method(Method.TEARDOWN)
-                .uri(baseUri)
                 .build();
         session.send(stop);
+    }
+
+    public void send(Request request) {
+        if (!isConnected()) {
+            Log.e(TAG, "session is not connection");
+            return;
+        }
+        session.send(request);
     }
 
     public boolean isConnected() {
         return session.isConnected();
     }
 
-    private final ITransportListener mTransportListener = new ITransportListener() {
+    private final ISessionStateObserver mTransportListener = new ISessionStateObserver() {
         @Override
         public void onConnected() {
             for (IRTPPacketObserver observer : mObservers) {
@@ -98,9 +95,9 @@ public class RTSPClient extends Observable<RTSPClient.IRTPPacketObserver> {
         }
 
         @Override
-        public void onConnectFail(Exception exception) {
+        public void onConnectFailure(Throwable throwable) {
             for (IRTPPacketObserver observer : mObservers) {
-                observer.onConnectFail(exception);
+                observer.onConnectFailure(throwable);
             }
         }
 
@@ -129,8 +126,10 @@ public class RTSPClient extends Observable<RTSPClient.IRTPPacketObserver> {
 
         private String host;
         private int port = 554;
+        private int timeout = 3000;
         private TransportMethod transportMethod = TransportMethod.TCP;
         private IRTPPacketObserver rtpPacketReceiver;
+        private IInterceptor rtspInterceptor;
 
         public Builder host(String host) {
             this.host = host;
@@ -142,8 +141,18 @@ public class RTSPClient extends Observable<RTSPClient.IRTPPacketObserver> {
             return this;
         }
 
+        public Builder timeout(int timeout) {
+            this.timeout = timeout;
+            return this;
+        }
+
         public Builder transport(TransportMethod transportMethod) {
             this.transportMethod = transportMethod;
+            return this;
+        }
+
+        public Builder rtspInterceptor(IInterceptor rtspInterceptor) {
+            this.rtspInterceptor = rtspInterceptor;
             return this;
         }
 
@@ -160,29 +169,10 @@ public class RTSPClient extends Observable<RTSPClient.IRTPPacketObserver> {
     public interface IRTPPacketObserver {
         void onConnected();
 
-        void onConnectFail(Exception exception);
+        void onConnectFailure(Throwable throwable);
 
         void onDisconnected();
 
         void onReceive(RtpPacket rtpPacket);
-    }
-
-    public class RTPPacketObserver implements IRTPPacketObserver {
-
-        @Override
-        public void onConnected() {
-        }
-
-        @Override
-        public void onConnectFail(Exception exception) {
-        }
-
-        @Override
-        public void onDisconnected() {
-        }
-
-        @Override
-        public void onReceive(RtpPacket rtpPacket) {
-        }
     }
 }

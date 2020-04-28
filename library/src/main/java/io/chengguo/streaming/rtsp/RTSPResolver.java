@@ -91,7 +91,7 @@ class RTSPResolver implements IResolver<Integer, IResolver.IResolverCallback<Res
          * @param sLine
          */
         public void resolve(String sLine) {
-            if ((currentStep & STEP_LINE) != 0 && sLine.startsWith(Request.Version.PROTOCOL)) {//Line
+            if ((currentStep & STEP_LINE) != 0 && sLine.startsWith(Version.PROTOCOL)) {//Line
                 Response.Line line = Response.Line.parse(sLine);
                 response.setLine(line);
                 currentStep = STEP_HEADER;

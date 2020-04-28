@@ -8,6 +8,7 @@ import android.os.Bundle;
 
 import androidx.annotation.RequiresApi;
 
+import android.util.Log;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.View;
@@ -80,14 +81,7 @@ public class MainActivity extends Activity implements View.OnClickListener, RTSP
                 .transport(TransportMethod.TCP)
                 .setRTPPacketObserver(this)
                 .build();
-    }
-
-    @Override
-    protected void onResume() {
-        super.onResume();
-        if (!rtspClient.isConnected()) {
-            rtspClient.connect();
-        }
+        rtspClient.connect();
     }
 
     @Override
@@ -111,17 +105,17 @@ public class MainActivity extends Activity implements View.OnClickListener, RTSP
 
     @Override
     public void onConnected() {
-
+        Log.d(TAG, "onConnected");
     }
 
     @Override
-    public void onConnectFail(Exception exception) {
-
+    public void onConnectFailure(Throwable throwable) {
+        Log.w(TAG, "onConnectFailure", throwable);
     }
 
     @Override
     public void onDisconnected() {
-
+        Log.d(TAG, "onDisconnected");
     }
 
     @Override
