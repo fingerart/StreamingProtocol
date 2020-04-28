@@ -16,8 +16,10 @@ public class RTSPTransportListenerWrapper implements io.chengguo.streaming.trans
     private final RTSPResolver mRTSPResolver;
     private final RTPResolver mRTPResolver;
     private final RTCPResolver mRTCPResolver;
+    private final ISessionStateObserver mSessionStateObserver;
 
-    public RTSPTransportListenerWrapper(IResolver.IResolverCallback<Response> rtspResolver, IResolver.IResolverCallback<RtpPacket> rtpPacketIResolverCallback, RTCPResolver.RTCPResolverListener rtcpResolver) {
+    public RTSPTransportListenerWrapper(ISessionStateObserver sessionStateObserver, IResolver.IResolverCallback<Response> rtspResolver, IResolver.IResolverCallback<RtpPacket> rtpPacketIResolverCallback, RTCPResolver.RTCPResolverListener rtcpResolver) {
+        mSessionStateObserver = sessionStateObserver;
         mRTSPResolver = new RTSPResolver(rtspResolver);
         mRTPResolver = new RTPResolver(rtpPacketIResolverCallback);
         mRTCPResolver = new RTCPResolver(rtcpResolver);
@@ -25,6 +27,9 @@ public class RTSPTransportListenerWrapper implements io.chengguo.streaming.trans
 
     @Override
     public void onConnected(DataInputStream in) throws IOException {
+        if (mSessionStateObserver != null) {
+            mSessionStateObserver.onConnected();
+        }
         int firstByte;
         while ((firstByte = in.readUnsignedByte()) > 0) {
             L.d("First Byte: " + firstByte);
@@ -33,26 +38,29 @@ public class RTSPTransportListenerWrapper implements io.chengguo.streaming.trans
                 int secondByte = in.readUnsignedByte();
                 //channel is rtp
                 if (secondByte == 0) {
-                    if (mRTPResolver != null) {
-                        int rtpLength = in.readUnsignedShort();
-                        mRTPResolver.resolve(in, rtpLength);
-                    }
+                    int rtpLength = in.readUnsignedShort();
+                    mRTPResolver.resolve(in, rtpLength);
                 } else if (secondByte == 1) { //channel is rtcp
-                    if (mRTCPResolver != null) {
-                        int rtcpLength = in.readUnsignedShort();
-                        mRTCPResolver.resolve(in, rtcpLength);
-                    }
+                    int rtcpLength = in.readUnsignedShort();
+                    mRTCPResolver.resolve(in, rtcpLength);
                 }
             } else {//RTSP
-                if (mRTSPResolver != null) {
-                    mRTSPResolver.resolve(in, firstByte);
-                }
+                mRTSPResolver.resolve(in, firstByte);
             }
         }
     }
 
     @Override
     public void onConnectChanged(int state, Throwable throwable) {
-
+        switch (state) {
+            case STATE_CONNECT_FAILURE:
+                if (mSessionStateObserver != null) {
+                    mSessionStateObserver.onConnectFailure(throwable);
+                }
+            case STATE_DISCONNECTED:
+                if (mSessionStateObserver != null) {
+                    mSessionStateObserver.onDisconnected();
+                }
+        }
     }
 }

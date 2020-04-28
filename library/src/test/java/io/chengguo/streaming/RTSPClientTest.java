@@ -7,7 +7,6 @@ import org.junit.Test;
 
 import java.net.URI;
 
-import io.chengguo.streaming.rtcp.IPacket;
 import io.chengguo.streaming.rtp.RtpPacket;
 import io.chengguo.streaming.rtsp.IResolver;
 import io.chengguo.streaming.rtsp.Method;
@@ -26,7 +25,7 @@ public class RTSPClientTest {
 
     @Before
     public void setUp() throws Exception {
-        session = new RTSPSession("127.0.0.1", 554, TransportMethod.TCP);
+        session = new RTSPSession("127.0.0.1", 554, builder.timeout, TransportMethod.TCP);
         session.setRTSPResolverCallback(new IResolver.IResolverCallback<Response>() {
             @Override
             public void onResolve(Response response) {
@@ -53,7 +52,7 @@ public class RTSPClientTest {
             }
         });
 
-        session.setRTPResolverCallback(new IResolver.IResolverCallback<RtpPacket>() {
+        session.setRTPResolverObserver(new IResolver.IResolverCallback<RtpPacket>() {
             @Override
             public void onResolve(RtpPacket rtpPacket) {
                 System.out.println("RTP packet: " + rtpPacket);

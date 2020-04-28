@@ -1,4 +1,4 @@
-package io.chengguo.streaming.rtsp;
+package io.chengguo.streaming.transport;
 
 /**
  * Created by fingerart on 2018-09-07.

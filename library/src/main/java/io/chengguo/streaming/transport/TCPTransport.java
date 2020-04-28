@@ -9,9 +9,6 @@ import java.net.Socket;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-import io.chengguo.streaming.rtsp.IMessage;
-import io.chengguo.streaming.utils.L;
-
 /**
  * Created by fingerart on 2018-09-08.
  */
@@ -32,7 +29,7 @@ public class TCPTransport extends TransportImpl {
 
     @Override
     public DataInputStream connectSync() throws IOException {
-        if (!isConnected()) {
+        if (isConnected()) {
             throw new IllegalStateException("TCP is connected.");
         }
         socket.connect(address, timeout);
@@ -72,6 +69,19 @@ public class TCPTransport extends TransportImpl {
 
     @Override
     public void send(final IMessage message, final MessageCallback callback) {
+        if (message == null) {
+            if (callback != null) {
+                callback.onFailure(new IllegalArgumentException("Message is null"));
+            }
+            return;
+        }
+        final byte[] raw = message.toRaw();
+        if (raw.length==0) {
+            if (callback != null) {
+                callback.onFailure(new IllegalArgumentException("Message is empty"));
+            }
+            return;
+        }
         if (!isOutputShutdown()) {
             if (callback != null) {
                 callback.onFailure(new IllegalStateException("Output is Shutdown"));
@@ -83,7 +93,7 @@ public class TCPTransport extends TransportImpl {
             public void run() {
                 try {
                     if (!isOutputShutdown()) {
-                        outputStream.write(message.toRaw());
+                        outputStream.write(raw);
                         if (callback != null) {
                             callback.onSuccess();
                         }

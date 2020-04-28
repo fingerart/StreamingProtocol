@@ -4,7 +4,7 @@ import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 
-import io.chengguo.streaming.rtsp.IMessage;
+import io.chengguo.streaming.transport.IMessage;
 import io.chengguo.streaming.utils.Bits;
 
 //@formatter:off
