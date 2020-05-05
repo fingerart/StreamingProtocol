@@ -13,8 +13,6 @@ import java.util.concurrent.Executors;
  * Created by fingerart on 2018-09-08.
  */
 public class TCPTransport extends TransportImpl {
-
-    private static final ExecutorService EXECUTOR = Executors.newCachedThreadPool();
     private int timeout;
     private Socket socket;
     private InetSocketAddress address;
@@ -28,29 +26,43 @@ public class TCPTransport extends TransportImpl {
 
     @Override
     public DataInputStream connectSync() throws IOException {
-        if (isConnected()) {
-            throw new IllegalStateException("TCP is connected");
+        synchronized (this) {
+            if (isConnected()) {
+                throw new IllegalStateException("TCP is connected");
+            }
+            socket = new Socket();
+            socket.connect(address, timeout);
+            inputStream = socket.getInputStream();
+            outputStream = socket.getOutputStream();
         }
-        socket = new Socket();
-        socket.connect(address, timeout);
-        inputStream = socket.getInputStream();
-        outputStream = socket.getOutputStream();
         return new DataInputStream(inputStream);
     }
 
     @Override
     public void connect() {
+        connect(null);
+    }
+
+    @Override
+    public void connect(final ConnectCallback connectCallback) {
         EXECUTOR.execute(new Runnable() {
             @Override
             public void run() {
                 try {
                     DataInputStream in = connectSync();
                     try {
+                        if (connectCallback != null) {
+                            connectCallback.onSuccess();
+                        }
+                        // Do work
                         dispatchOnConnected(in);
                     } catch (IOException e) {
                         dispatchOnDisconnected();
                     }
                 } catch (Exception e) {
+                    if (connectCallback != null) {
+                        connectCallback.onFailure(e);
+                    }
                     dispatchOnConnectFailure(e);
                 }
             }

@@ -25,33 +25,7 @@ public class RTSPClientTest {
 
     @Before
     public void setUp() throws Exception {
-        session = new RTSPSession("127.0.0.1", 554, builder.timeout, TransportMethod.TCP);
-        session.setRTSPResolverCallback(new IResolver.IResolverCallback<Response>() {
-            @Override
-            public void onResolve(Response response) {
-                try {
-                    Request request = response.getRequest();
-                    Method method = request.getLine().getMethod();
-                    System.out.println(response);
-                    switch (method) {
-                        case OPTIONS:
-                            describe();
-                            break;
-                        case DESCRIBE:
-                            setup();
-                            break;
-                        case SETUP:
-                            play();
-                            break;
-                        case PLAY:
-                            pause();
-                    }
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-            }
-        });
-
+        session = new RTSPSession("127.0.0.1", 554, 2000, TransportMethod.TCP);
         session.setRTPResolverObserver(new IResolver.IResolverCallback<RtpPacket>() {
             @Override
             public void onResolve(RtpPacket rtpPacket) {

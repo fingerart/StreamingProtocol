@@ -1,0 +1,1 @@
+docker run -d --name live555 -p 554:554 -v `pwd`/data:/data vimagick/live555

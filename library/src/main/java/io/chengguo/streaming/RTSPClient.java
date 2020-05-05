@@ -11,6 +11,8 @@ import io.chengguo.streaming.rtsp.ISessionStateObserver;
 import io.chengguo.streaming.rtsp.Method;
 import io.chengguo.streaming.rtsp.RTSPSession;
 import io.chengguo.streaming.rtsp.Request;
+import io.chengguo.streaming.transport.SendCallback;
+import io.chengguo.streaming.transport.TransportImpl;
 import io.chengguo.streaming.transport.TransportMethod;
 
 /**
@@ -19,19 +21,16 @@ import io.chengguo.streaming.transport.TransportMethod;
 public class RTSPClient extends Observable<RTSPClient.IRTPPacketObserver> {
 
     private static final String TAG = RTSPClient.class.getSimpleName();
-
+    private final int timeout;
+    private final TransportMethod transportMethod;
+    private final IInterceptor rtspInterceptor;
     private RTSPSession session;
 
     public RTSPClient(Builder builder) {
         registerObserver(builder.rtpPacketReceiver);
-        session = new RTSPSession(builder.host, builder.port, builder.timeout, builder.transportMethod);
-        session.addInterceptor(builder.rtspInterceptor);
-        session.setStateObserver(mTransportListener);
-        session.setRTPResolverObserver(mRTPResolverCallback);
-    }
-
-    public void connect() {
-        session.connect();
+        timeout = builder.timeout;
+        transportMethod = builder.transportMethod;
+        rtspInterceptor = builder.rtspInterceptor;
     }
 
     public void disconnect() {
@@ -40,21 +39,65 @@ public class RTSPClient extends Observable<RTSPClient.IRTPPacketObserver> {
         }
     }
 
-    public void play(URI uri) {
-        if (!isConnected()) {
-            Log.e(TAG, "session is not connection");
-            return;
-        }
-        Request request = new Request.Builder()
+    public void play(final URI uri) {
+        final Request request = new Request.Builder()
                 .method(Method.OPTIONS)
                 .uri(uri)
                 .build();
-        session.send(request);
+        if (isConnected()) {
+            if (!isSameTarget(uri)) {
+                //链接到不同的服务器或端口号，断开链接
+                session.disconnect();
+                session = null;
+            } else {
+                //是否在播放中，需停止播放
+                if (session.isNormal()) {
+                    teardown(new SendCallback() {
+                        @Override
+                        public void onSuccess() {
+                            session.send(request);
+                        }
+
+                        @Override
+                        public void onFailure(Throwable throwable) {
+                            System.out.println("throwable = " + throwable);
+                        }
+                    });
+                } else {
+                    session.send(request);
+                }
+                return;
+            }
+        }
+
+        session = new RTSPSession(uri.getHost(), uri.getPort(), timeout, transportMethod);
+        session.addInterceptor(rtspInterceptor);
+        session.setStateObserver(mTransportListener);
+        session.setRTPResolverObserver(mRTPResolverCallback);
+        session.connect(new TransportImpl.ConnectCallback() {
+            @Override
+            public void onSuccess() {
+                session.send(request);
+            }
+
+            @Override
+            public void onFailure(Throwable throwable) {
+                System.out.println("throwable = " + throwable);
+            }
+        });
+    }
+
+    private boolean isSameTarget(URI uri) {
+        return uri.getHost().equals(session.mHost) && uri.getPort() == session.mPort;
     }
 
     public void resume() {
         if (!isConnected()) {
             Log.e(TAG, "session is not connection");
+            return;
+        }
+        if (!session.isPause()) {
+            Log.e(TAG, "session state is not pause");
             return;
         }
         Request request = new Request.Builder()
@@ -68,6 +111,12 @@ public class RTSPClient extends Observable<RTSPClient.IRTPPacketObserver> {
             Log.e(TAG, "session is not connection");
             return;
         }
+
+        if (!session.isPlay()) {
+            Log.e(TAG, "session state is not play");
+            return;
+        }
+
         Request stop = new Request.Builder()
                 .method(Method.PAUSE)
                 .build();
@@ -75,6 +124,10 @@ public class RTSPClient extends Observable<RTSPClient.IRTPPacketObserver> {
     }
 
     public void teardown() {
+        teardown(null);
+    }
+
+    private void teardown(SendCallback sendCallback) {
         if (!isConnected()) {
             Log.e(TAG, "session is not connection");
             return;
@@ -82,7 +135,7 @@ public class RTSPClient extends Observable<RTSPClient.IRTPPacketObserver> {
         Request stop = new Request.Builder()
                 .method(Method.TEARDOWN)
                 .build();
-        session.send(stop);
+        session.send(stop, sendCallback);
     }
 
     public void send(Request request) {
@@ -94,28 +147,22 @@ public class RTSPClient extends Observable<RTSPClient.IRTPPacketObserver> {
     }
 
     public boolean isConnected() {
-        return session.isConnected();
+        return session != null && session.isConnected();
     }
 
     private final ISessionStateObserver mTransportListener = new ISessionStateObserver() {
-        @Override
-        public void onConnected() {
-            for (IRTPPacketObserver observer : mObservers) {
-                observer.onConnected();
-            }
-        }
 
         @Override
-        public void onConnectFailure(Throwable throwable) {
+        public void onConnectChanged(int state) {
             for (IRTPPacketObserver observer : mObservers) {
-                observer.onConnectFailure(throwable);
-            }
-        }
-
-        @Override
-        public void onDisconnected() {
-            for (IRTPPacketObserver observer : mObservers) {
-                observer.onDisconnected();
+                switch (state) {
+                    case SESSION_STATE_CONNECTED:
+                        observer.onConnected();
+                        break;
+                    case SESSION_STATE_DISCONNECTED:
+                        observer.onDisconnected();
+                        break;
+                }
             }
         }
     };
@@ -135,22 +182,10 @@ public class RTSPClient extends Observable<RTSPClient.IRTPPacketObserver> {
 
     public static class Builder {
 
-        private String host;
-        private int port = 554;
         private int timeout = 3000;
         private TransportMethod transportMethod = TransportMethod.TCP;
         private IRTPPacketObserver rtpPacketReceiver;
         private IInterceptor rtspInterceptor;
-
-        public Builder host(String host) {
-            this.host = host;
-            return this;
-        }
-
-        public Builder port(int port) {
-            this.port = port;
-            return this;
-        }
 
         public Builder timeout(int timeout) {
             this.timeout = timeout;
@@ -179,8 +214,6 @@ public class RTSPClient extends Observable<RTSPClient.IRTPPacketObserver> {
 
     public interface IRTPPacketObserver {
         void onConnected();
-
-        void onConnectFailure(Throwable throwable);
 
         void onDisconnected();
 

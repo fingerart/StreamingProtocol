@@ -1,15 +1,19 @@
-package io.chengguo.streaming.rtsp.sdp;
+package io.chengguo.streaming.rtp.h264;
 
+import io.chengguo.streaming.MediaStream;
 import io.chengguo.streaming.codec.h264.SPS;
 
-public class H264SDP extends SDP {
+/**
+ * H264媒体流
+ * 从RTP中组帧H264流媒体数据
+ */
+public class H264MediaStream extends MediaStream {
 
     public String mimeType;
     public int sampleRate;
     public int packetizationMode;
     public SPS sps;
 
-    @Override
     protected void parseAttr(String shortField, String content) {
         if ("rtpmap".equals(shortField)) {
             String[] value = content.split(" ");
@@ -37,16 +41,5 @@ public class H264SDP extends SDP {
                 }
             }
         }
-    }
-
-    @Override
-    public String toString() {
-        super.toString();
-        return "H264SDP{" +
-                "mimeType='" + mimeType + '\'' +
-                ", sampleRate=" + sampleRate +
-                ", packetizationMode=" + packetizationMode +
-                ", sps=" + sps +
-                '}';
     }
 }

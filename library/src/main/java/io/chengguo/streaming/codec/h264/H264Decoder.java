@@ -205,7 +205,7 @@ public class H264Decoder extends Decoder {
     }
 
     @Override
-    public void start() {
+    public void prepare() {
 
     }
 
