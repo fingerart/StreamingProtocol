@@ -1,16 +1,19 @@
 package io.chengguo.streaming.rtsp;
 
-import androidx.annotation.NonNull;
-
+import java.io.DataInputStream;
+import java.io.IOException;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import androidx.annotation.NonNull;
 import io.chengguo.streaming.rtcp.RTCPResolver;
 import io.chengguo.streaming.rtcp.ReceiverReport;
 import io.chengguo.streaming.rtcp.SenderReport;
 import io.chengguo.streaming.rtcp.SourceDescription;
+import io.chengguo.streaming.rtp.RTPResolver;
 import io.chengguo.streaming.rtp.RtpPacket;
 import io.chengguo.streaming.rtsp.header.CSeqHeader;
 import io.chengguo.streaming.rtsp.header.Header;
@@ -18,10 +21,12 @@ import io.chengguo.streaming.rtsp.header.RangeHeader;
 import io.chengguo.streaming.rtsp.header.SessionHeader;
 import io.chengguo.streaming.rtsp.header.TransportHeader;
 import io.chengguo.streaming.rtsp.header.UserAgentHeader;
-import io.chengguo.streaming.rtsp.sdp.H264SDP;
+import io.chengguo.streaming.rtsp.sdp.SDP;
 import io.chengguo.streaming.transport.IMessage;
+import io.chengguo.streaming.transport.SendCallback;
 import io.chengguo.streaming.transport.TransportImpl;
 import io.chengguo.streaming.transport.TransportMethod;
+import io.chengguo.streaming.utils.L;
 import io.chengguo.streaming.utils.Utils;
 
 import static io.chengguo.streaming.rtsp.header.TransportHeader.Specifier.TCP;
@@ -34,54 +39,31 @@ public class RTSPSession {
 
     private static final String TAG = RTSPSession.class.getSimpleName();
 
-    private String host;
-    private int port;
+    @RtspState
+    private int mState = RtspState.UNSTART;
+    public String mHost;
+    public int mPort;
     private TransportMethod method;
-    private TransportImpl transport;
-    private String session;
-    private String baseUri;
-    private AtomicInteger sequence = new AtomicInteger();
-    private HashMap<Integer, Request> requestList = new HashMap<>();
+    private TransportImpl mTransport;
+    private String mSession;
+    private String mBaseUri;
+    private AtomicInteger mSequence = new AtomicInteger();
+    private HashMap<Integer, Request> mRequestList = new HashMap<>();
     private IResolver.IResolverCallback<RtpPacket> mRtpResolverCallback;
-    private ArrayList<IInterceptor> mInterceptors = new ArrayList();
+    private ArrayList<IInterceptor> mInterceptors = new ArrayList<>();
     private ISessionStateObserver mSessionStateObserver;
+    private SDP mSdp;
 
     public RTSPSession(String host, int port, int timeout, TransportMethod method) {
-        this.host = host;
-        this.port = port;
+        this.mHost = host;
+        this.mPort = port;
         this.method = method;
-        transport = this.method.createTransport(this.host, this.port, timeout);
-        transport.setTransportListener(new RTSPTransportListenerWrapper(
-                createStateObserver(),
+        mTransport = this.method.createTransport(this.mHost, this.mPort, timeout);
+        mTransport.setTransportListener(new RTSPTransportListenerWrapper(
                 createRTSPResolver(),
                 createRTPResolver(),
                 createRTCPResolver()
         ));
-    }
-
-    private ISessionStateObserver createStateObserver() {
-        return new ISessionStateObserver() {
-            @Override
-            public void onConnected() {
-                if (mSessionStateObserver != null) {
-                    mSessionStateObserver.onConnected();
-                }
-            }
-
-            @Override
-            public void onConnectFailure(Throwable throwable) {
-                if (mSessionStateObserver != null) {
-                    mSessionStateObserver.onConnectFailure(throwable);
-                }
-            }
-
-            @Override
-            public void onDisconnected() {
-                if (mSessionStateObserver != null) {
-                    mSessionStateObserver.onDisconnected();
-                }
-            }
-        };
     }
 
     @NonNull
@@ -92,13 +74,13 @@ public class RTSPSession {
                 //获取暂存中的Request
                 CSeqHeader cSeqHeader = response.getHeader(CSeqHeader.DEFAULT_NAME);
                 if (cSeqHeader != null) {
-                    Request request = requestList.get(cSeqHeader.getRawValue());
+                    Request request = mRequestList.get(cSeqHeader.getRawValue());
                     response.setRequest(request);
-                    requestList.remove(cSeqHeader.getRawValue());
+                    mRequestList.remove(cSeqHeader.getRawValue());
                 }
                 SessionHeader sessionHeader = response.getHeader(SessionHeader.DEFAULT_NAME);
                 if (sessionHeader != null) {
-                    session = sessionHeader.getSession();
+                    mSession = sessionHeader.getSession();
                 }
                 for (IInterceptor interceptor : mInterceptors) {
                     interceptor.onResponse(response);
@@ -130,7 +112,7 @@ public class RTSPSession {
             public void onSenderReport(SenderReport senderReport) {
                 System.out.println("RTSPSession.onSenderReport: " + "senderReport = [" + senderReport + "]");
                 RtspPacket rtspPacket = new RtspPacket(0x01, new IMessage[]{new ReceiverReport(8888)});
-                transport.send(rtspPacket);
+                mTransport.send(rtspPacket);
             }
 
             @Override
@@ -149,28 +131,35 @@ public class RTSPSession {
         Request.Builder builder = new Request.Builder();
         Request prevRequest = response.getRequest();
         switch (prevRequest.getLine().getMethod()) {
-            case OPTIONS:// next is describe
+            case OPTIONS://1. next is describe
+                mState = RtspState.OPTIONS;
                 builder.method(Method.DESCRIBE).uri(prevRequest.getLine().getUri());
                 break;
-            case DESCRIBE:// next is setup
+            case DESCRIBE://2. next is setup
+                mState = RtspState.DESCRIBE;
                 Header<String> base = response.getHeader("Content-Base");
-                baseUri = base.getRawValue();
-                H264SDP sdp = new H264SDP();
-                sdp.from(response.getBody().toString());
+                mBaseUri = base.getRawValue();
+                mSdp = SDP.parse(response.getBody().toString());
                 TransportHeader header = new TransportHeader.Builder()
                         .specifier(TCP)
                         .broadcastType(TransportHeader.BroadcastType.unicast)
                         .build();
-                builder.method(Method.SETUP).uri(URI.create(baseUri + sdp.getMediaControl())).addHeader(header);
+                List<SDP.MediaDescription> md = mSdp.getMediaDescriptions();
+                builder.method(Method.SETUP).uri(URI.create(mBaseUri + md.get(0).mediaControl)).addHeader(header);
                 break;
-            case SETUP:// next is play
-                builder.method(Method.PLAY).addHeader(new RangeHeader(0)).uri(baseUri);
+            case SETUP://3. next is play
+                mState = RtspState.SETUP;
+                builder.method(Method.PLAY).addHeader(new RangeHeader(0)).uri(mBaseUri);
                 break;
-            case PLAY:// not replay
+            case PLAY://4. not replay
+                mState = RtspState.PLAY;
+                return null;
             case TEARDOWN:
+                mState = RtspState.TEARDOWN;
+                return null;
             case PAUSE:
-            case GET_PARAMETER:
-            case SET_PARAMETER:
+                mState = RtspState.PAUSE;
+                return null;
             case RECORD:
             default:
                 return null;
@@ -179,7 +168,23 @@ public class RTSPSession {
     }
 
     public void connect() {
-        transport.connect();
+        mTransport.connect();
+    }
+
+    public void connect(TransportImpl.ConnectCallback callback) {
+        mTransport.connect(callback);
+    }
+
+    public boolean isNormal() {
+        return mState == RtspState.PAUSE || mState == RtspState.PLAY;
+    }
+
+    public boolean isPause() {
+        return mState == RtspState.PAUSE;
+    }
+
+    public boolean isPlay() {
+        return mState == RtspState.PLAY;
     }
 
     /**
@@ -197,14 +202,18 @@ public class RTSPSession {
      * @param request
      */
     public void send(Request request) {
-        int cseq = sequence.incrementAndGet();
+        send(request, null);
+    }
+
+    public void send(Request request, SendCallback sendCallback) {
+        int cseq = mSequence.incrementAndGet();
         request.addHeader(new CSeqHeader(cseq));
-        if (!Utils.isEmpty(session)) {
-            request.addHeader(new SessionHeader(session, 0));
+        if (!Utils.isEmpty(mSession)) {
+            request.addHeader(new SessionHeader(mSession, 0));
         }
         request.addHeader(new UserAgentHeader("ChengGuo Live"));
-        if (request.getLine().getUri() == null && !Utils.isEmpty(baseUri)) {
-            request.getLine().setUri(URI.create(baseUri));
+        if (request.getLine().getUri() == null && !Utils.isEmpty(mBaseUri)) {
+            request.getLine().setUri(URI.create(mBaseUri));
         }
 
         StringBuilder sb = new StringBuilder();
@@ -218,10 +227,17 @@ public class RTSPSession {
         }
 
         //暂存Request
-        requestList.put(cseq, request);
+        mRequestList.put(cseq, request);
+
+        //Teardown 清理资源
+        if (request.getLine().getMethod() == Method.TEARDOWN) {
+            mSession = null;
+            mBaseUri = null;
+            mSdp = null;
+        }
 
         //发送请求
-        transport.send(request);
+        mTransport.send(request, sendCallback);
     }
 
     /**
@@ -230,7 +246,7 @@ public class RTSPSession {
      * @return
      */
     public boolean isConnected() {
-        return transport.isConnected();
+        return mTransport.isConnected();
     }
 
     /**
@@ -238,7 +254,7 @@ public class RTSPSession {
      */
     public void disconnect() {
         if (isConnected()) {
-            transport.disconnect();
+            mTransport.disconnect();
         }
     }
 
@@ -256,5 +272,55 @@ public class RTSPSession {
 
     public void setStateObserver(ISessionStateObserver sessionStateObserver) {
         mSessionStateObserver = sessionStateObserver;
+    }
+
+    /**
+     * TransportListener Wrapper
+     */
+    public class RTSPTransportListenerWrapper implements io.chengguo.streaming.transport.ITransportListener {
+
+        private final RTSPResolver mRTSPResolver;
+        private final RTPResolver mRTPResolver;
+        private final RTCPResolver mRTCPResolver;
+
+        public RTSPTransportListenerWrapper(IResolver.IResolverCallback<Response> rtspResolver, IResolver.IResolverCallback<RtpPacket> rtpPacketIResolverCallback, RTCPResolver.RTCPResolverListener rtcpResolver) {
+            mRTSPResolver = new RTSPResolver(rtspResolver);
+            mRTPResolver = new RTPResolver(rtpPacketIResolverCallback);
+            mRTCPResolver = new RTCPResolver(rtcpResolver);
+        }
+
+        @Override
+        public void onConnected(DataInputStream in) throws IOException {
+            if (mSessionStateObserver != null) {
+                mSessionStateObserver.onConnectChanged(ISessionStateObserver.SESSION_STATE_CONNECTED);
+            }
+            int firstByte;
+            while ((firstByte = in.readUnsignedByte()) > 0) {
+                L.d("First Byte: " + firstByte);
+                //'$' beginning is the RTP and RTCP
+                if (firstByte == 36) {//0x24
+                    int secondByte = in.readUnsignedByte();
+                    //channel is rtp
+                    if (secondByte == 0) {
+                        int rtpLength = in.readUnsignedShort();
+                        mRTPResolver.resolve(in, rtpLength);
+                    } else if (secondByte == 1) { //channel is rtcp
+                        int rtcpLength = in.readUnsignedShort();
+                        mRTCPResolver.resolve(in, rtcpLength);
+                    }
+                } else {//RTSP
+                    mRTSPResolver.resolve(in, firstByte);
+                }
+            }
+        }
+
+        @Override
+        public void onConnectChanged(int state, Throwable throwable) {
+            switch (state) {
+                case STATE_CONNECT_FAILURE:
+                case STATE_DISCONNECTED:
+                    mSessionStateObserver.onConnectChanged(ISessionStateObserver.SESSION_STATE_DISCONNECTED);
+            }
+        }
     }
 }

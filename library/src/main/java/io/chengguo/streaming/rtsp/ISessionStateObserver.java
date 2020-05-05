@@ -1,9 +1,14 @@
 package io.chengguo.streaming.rtsp;
 
+import androidx.annotation.IntDef;
+
 public interface ISessionStateObserver {
-    void onConnected();
+    int SESSION_STATE_CONNECTED = 0;
+    int SESSION_STATE_DISCONNECTED = 1;
 
-    void onConnectFailure(Throwable throwable);
+    @IntDef({SESSION_STATE_CONNECTED, SESSION_STATE_DISCONNECTED})
+    @interface SessionState {
+    }
 
-    void onDisconnected();
+    void onConnectChanged(@SessionState int state);
 }

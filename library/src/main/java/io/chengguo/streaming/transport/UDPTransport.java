@@ -18,6 +18,11 @@ public class UDPTransport extends TransportImpl {
     }
 
     @Override
+    public void connect(ConnectCallback connectCallback) {
+
+    }
+
+    @Override
     public boolean isConnected() {
         return false;
     }

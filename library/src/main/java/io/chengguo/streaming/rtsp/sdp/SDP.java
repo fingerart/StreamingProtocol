@@ -2,13 +2,14 @@ package io.chengguo.streaming.rtsp.sdp;
 
 
 import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
+import io.chengguo.streaming.utils.Utils;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
-class SDP implements ISerializer {
-
-    private HashMap<String, String> mContents = new HashMap<>();
+public class SDP {
 
     /**
      * Session Description Protocol Version (v)
@@ -39,17 +40,13 @@ class SDP implements ISerializer {
      */
     private String type;
     /**
-     * Session Attribute (a): control
-     */
-    private String mediaControl;
-    /**
      * Session Attribute (a): range
      */
     private String range;
     /**
      * Media Description, name and address (m): video 0 RTP/AVP 96
      */
-    private MediaDescription mediaDescription;
+    private List<MediaDescription> mediaDescriptions = new ArrayList<>();
 
     public int getVersion() {
         return version;
@@ -83,26 +80,17 @@ class SDP implements ISerializer {
         return type;
     }
 
-    public String getMediaControl() {
-        return mediaControl;
-    }
-
     public String getRange() {
         return range;
     }
 
-    public MediaDescription getMediaDescription() {
-        return mediaDescription;
+    public List<MediaDescription> getMediaDescriptions() {
+        return mediaDescriptions;
     }
 
-    @Nullable
-    public String query(String key) {
-        return mContents.get(key);
-    }
-
-    @Override
-    public SDP from(String text) {
-        String[] lines = text.split("\r\n");
+    public static SDP parse(String text) {
+        SDP sdp = new SDP();
+        String[] lines = text.split("\r\n|\n");
         for (String line : lines) {
             String[] split = line.split("=", 2);
             if (split.length != 2) {
@@ -110,13 +98,31 @@ class SDP implements ISerializer {
             }
             String shortField = split[0];
             String content = split[1];
-            mContents.put(shortField, content);
-            parseLine(shortField, content);
+            sdp.parseLine(Utils.trimSafely(shortField), Utils.trimSafely(content));
         }
-        return this;
+        return sdp;
     }
 
+    private MediaDescription tempMediaDescription;
+
     private void parseLine(String shortField, String content) {
+
+        if ("m".equals(shortField)) {
+            tempMediaDescription = parseMediaDes(content);
+        }
+
+        if (tempMediaDescription != null) {
+            if ("a".equals(shortField) || "b".equals(shortField)) {
+                if (tempMediaDescription.appendAttrs(content)) {
+                    // stop current media
+                    if (tempMediaDescription.attributes.containsKey("control")) {
+                        mediaDescriptions.add(tempMediaDescription);
+                        tempMediaDescription = null;
+                    }
+                    return;
+                }
+            }
+        }
         if ("v".equals(shortField)) {
             version = Integer.parseInt(content);
         } else if ("o".equals(shortField)) {
@@ -125,8 +131,6 @@ class SDP implements ISerializer {
             sessionInfo = content;
         } else if ("s".equals(shortField)) {
             sessionName = content;
-        } else if ("m".equals(shortField)) {
-            mediaDescription = parseMediaDes(content);
         } else if ("t".equals(shortField)) {
             parseActiveTime(content);
         } else if ("a".equals(shortField)) {
@@ -150,14 +154,10 @@ class SDP implements ISerializer {
             String attrValue = attrs[1];
             if ("tool".equals(attrName)) {
                 tool = attrValue;
-            } else if ("control".equals(attrName)) {
-                mediaControl = attrValue;
             } else if ("type".equals(attrName)) {
                 type = attrValue;
             } else if ("range".equals(attrName)) {
                 range = attrValue;
-            } else {
-                parseAttr(attrName, attrValue);
             }
         }
     }
@@ -229,9 +229,8 @@ class SDP implements ISerializer {
                 ", sessionTimeStop=" + sessionTimeStop +
                 ", tool='" + tool + '\'' +
                 ", type='" + type + '\'' +
-                ", mediaControl='" + mediaControl + '\'' +
                 ", range='" + range + '\'' +
-                ", mediaDescription=" + mediaDescription +
+                ", mediaDescription=" + mediaDescriptions +
                 '}';
     }
 
@@ -261,24 +260,47 @@ class SDP implements ISerializer {
          * media type
          * example: video
          */
-        String type;
+        public String type;
 
         /**
          * media port
          */
-        int port;
+        public int port;
 
         /**
          * media protocol
          * example: RTP/AVP
          */
-        String protocol;
+        public String protocol;
 
         /**
          * media format
          * example: 96
          */
-        int format;
+        public int format;
+
+        public int bandwidth;
+
+        /**
+         * Session Attribute (a): control
+         */
+        public String mediaControl;
+
+        public Map<String, String> attributes = new HashMap<>();
+
+        public boolean appendAttrs(String content) {
+            String[] attrs = content.split(":");
+            if (attrs.length == 2) {
+                String attrName = attrs[0];
+                String attrValue = attrs[1];
+                attributes.put(attrName, attrValue);
+                if ("control".equals(attrName)) {
+                    mediaControl = attrValue;
+                }
+                return true;
+            }
+            return false;
+        }
 
         @Override
         public String toString() {
@@ -287,6 +309,8 @@ class SDP implements ISerializer {
                     ", port=" + port +
                     ", protocol='" + protocol + '\'' +
                     ", format=" + format +
+                    ", bandwidth=" + bandwidth +
+                    ", attributes=" + attributes +
                     '}';
         }
     }
