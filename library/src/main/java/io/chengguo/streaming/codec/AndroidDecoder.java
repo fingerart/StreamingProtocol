@@ -1,8 +1,10 @@
 package io.chengguo.streaming.codec;
 
 import android.media.MediaCodec;
+import android.media.MediaCrypto;
 import android.media.MediaFormat;
 import android.os.Build;
+import android.view.Surface;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -29,7 +31,7 @@ public abstract class AndroidDecoder extends Decoder {
         String mime = format.getString(MediaFormat.KEY_MIME);
         MediaCodec mediaCodec = createDecoder(mime);
         //TODO Surface
-        mediaCodec.configure(format, null, null, 0);
+        mediaCodec.configure(format, createPreviewSurface(), null, 0);
         onMediaCodecConfigured(mediaCodec);
         mediaCodec.start();
         mMediaCodec = mediaCodec;
@@ -83,6 +85,10 @@ public abstract class AndroidDecoder extends Decoder {
             }
         }
         return MediaCodec.createDecoderByType(type);
+    }
+
+    protected Surface createPreviewSurface() {
+        return null;
     }
 
     protected abstract MediaFormat createMediaFormat();
