@@ -2,6 +2,8 @@ package io.chengguo.streaming.utils;
 
 import org.junit.Test;
 
+import java.util.Base64;
+
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
 
@@ -80,5 +82,10 @@ public class BitsTest {
     public void testDumpBytesToHex() {
         byte[] bytes = {32, 12, 2, 3, 1, 8, 32, 12, 2, 3, 1, 8, 32, 12, 2, 3, 1, 8,};
         System.out.println(Bits.dumpBytesToHex(bytes));
+    }
+
+    @Test
+    public void testPPS() {
+        System.out.println(Bits.dumpBytesToHex(Base64.getDecoder().decode("J0LgC6kYYJ2ANQYBBrbCte98BA==")));
     }
 }

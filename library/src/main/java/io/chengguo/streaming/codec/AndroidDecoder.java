@@ -30,7 +30,6 @@ public abstract class AndroidDecoder extends Decoder {
         MediaFormat format = createMediaFormat();
         String mime = format.getString(MediaFormat.KEY_MIME);
         MediaCodec mediaCodec = createDecoder(mime);
-        //TODO Surface
         mediaCodec.configure(format, createPreviewSurface(), null, 0);
         onMediaCodecConfigured(mediaCodec);
         mediaCodec.start();

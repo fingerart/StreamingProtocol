@@ -3,24 +3,23 @@ package io.chengguo.streaming.codec.h264;
 import android.media.MediaCodec;
 import android.media.MediaFormat;
 import android.os.Build;
-import androidx.annotation.RequiresApi;
+import android.util.Base64;
 import android.util.Log;
 import android.view.Surface;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.util.Arrays;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
 
-import io.chengguo.streaming.codec.Decoder;
+import androidx.annotation.RequiresApi;
 import io.chengguo.streaming.exceptions.NotSupportException;
 import io.chengguo.streaming.utils.Bits;
 
 @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
-public class H264Decoder extends Decoder {
+public class H264Decoder {
 
     private static final String TAG = "H264Decoder";
     private static final byte[] START_CODE = new byte[]{0, 0, 0, 1};
@@ -204,12 +203,6 @@ public class H264Decoder extends Decoder {
         }
     }
 
-    @Override
-    public void prepare() {
-
-    }
-
-    @Override
     public void stop() {
         decoding = false;
         if (inputWorker != null) {
@@ -237,11 +230,15 @@ public class H264Decoder extends Decoder {
                 System.arraycopy(START_CODE, 0, sps, 0, 4);
                 System.arraycopy(data, 0, sps, 4, data.length);
                 videoFormat.setByteBuffer("csd-0", ByteBuffer.wrap(sps));
+                System.out.println("SPS:\r\n" + Bits.dumpBytesToHex(data));
+                System.out.println("SPS:\r\n" + java.util.Base64.getEncoder().encodeToString(data));
             } else if (type == 8) {//PPS
                 byte[] pps = new byte[4 + data.length];
                 System.arraycopy(START_CODE, 0, pps, 0, 4);
                 System.arraycopy(data, 0, pps, 4, data.length);
                 videoFormat.setByteBuffer("csd-1", ByteBuffer.wrap(pps));
+                System.out.println("PPS:\r\n" + Bits.dumpBytesToHex(data));
+                System.out.println("PPS:\r\n" + java.util.Base64.getEncoder().encodeToString(data));
             }
 
             if (videoFormat.containsKey("csd-0") && videoFormat.containsKey("csd-1")) {
