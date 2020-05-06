@@ -48,4 +48,8 @@ public class Utils {
     public static boolean isEmpty(byte[] bytes) {
         return bytes == null || bytes.length == 0;
     }
+
+    public static void findMimeByType(int mimeType) {
+        //96 h264
+    }
 }

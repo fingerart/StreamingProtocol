@@ -302,6 +302,14 @@ public class SDP {
             return false;
         }
 
+        public boolean isVideo() {
+            return "video".equalsIgnoreCase(type);
+        }
+
+        public boolean isAudio() {
+            return "audio".equalsIgnoreCase(type);
+        }
+
         @Override
         public String toString() {
             return "MediaDescription{" +

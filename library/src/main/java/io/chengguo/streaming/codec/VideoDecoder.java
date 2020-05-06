@@ -3,6 +3,7 @@ package io.chengguo.streaming.codec;
 import android.media.MediaCodec;
 import android.media.MediaFormat;
 import android.os.Build;
+import android.view.Surface;
 
 import androidx.annotation.RequiresApi;
 
@@ -13,10 +14,17 @@ import androidx.annotation.RequiresApi;
 public class VideoDecoder extends AndroidDecoder {
 
     private final VideoConfig mConfig;
+    private final Surface mSurface;
 
-    public VideoDecoder(VideoConfig config) {
+    public VideoDecoder(VideoConfig config, Surface surface) {
         super(null);
         mConfig = config;
+        mSurface = surface;
+    }
+
+    @Override
+    protected Surface createPreviewSurface() {
+        return mSurface;
     }
 
     @Override
