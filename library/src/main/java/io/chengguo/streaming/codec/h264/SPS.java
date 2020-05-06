@@ -10,6 +10,7 @@ public class SPS extends Frame {
     public int profileIdc;
     public int width;
     public int height;
+    public byte[] raw;
 
     public static boolean itsMine(byte first) {
         int type = first & 0x1F;
@@ -24,6 +25,7 @@ public class SPS extends Frame {
 
     public static SPS valueOf(ByteBuffer buffer) {
         SPS sps = new SPS();
+        sps.raw = buffer.array();
         sps.parseType(buffer.get());
         sps.parseProfile(buffer.get());
         byte b = buffer.get();

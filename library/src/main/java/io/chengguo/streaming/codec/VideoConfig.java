@@ -25,10 +25,10 @@ public class VideoConfig {
             videoFormat.setInteger(MediaFormat.KEY_I_FRAME_INTERVAL, 1);
         }
         if (mBuilder.csd0 != null) {
-            videoFormat.setByteBuffer("csd-0", mBuilder.csd0);
+            videoFormat.setByteBuffer("csd-0", ByteBuffer.wrap(mBuilder.csd0));
         }
         if (mBuilder.csd1 != null) {
-            videoFormat.setByteBuffer("csd-1", mBuilder.csd1);
+            videoFormat.setByteBuffer("csd-1", ByteBuffer.wrap(mBuilder.csd1));
         }
         return videoFormat;
     }
@@ -40,8 +40,8 @@ public class VideoConfig {
         int bitRate;
         int frameRate;
         int iFrameInterval;
-        ByteBuffer csd0;
-        ByteBuffer csd1;
+        byte[] csd0;
+        byte[] csd1;
 
         public Builder setMime(String mime) {
             this.mime = mime;
@@ -73,12 +73,22 @@ public class VideoConfig {
             return this;
         }
 
-        public Builder setCsd0(ByteBuffer csd0) {
+        /**
+         * sps
+         * @param csd0
+         * @return
+         */
+        public Builder setCsd0(byte[] csd0) {
             this.csd0 = csd0;
             return this;
         }
 
-        public Builder setCsd1(ByteBuffer csd1) {
+        /**
+         * pps
+          * @param csd1
+         * @return
+         */
+        public Builder setCsd1(byte[] csd1) {
             this.csd1 = csd1;
             return this;
         }
