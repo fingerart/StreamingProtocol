@@ -10,6 +10,7 @@ import android.os.Bundle;
 import androidx.annotation.RequiresApi;
 
 import android.util.Log;
+import android.view.Surface;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.View;
@@ -45,8 +46,6 @@ public class MainActivity extends Activity implements View.OnClickListener, RTSP
         setContentView(R.layout.activity_main);
         setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
 
-        createClient();
-
         mSurfaceView = findViewById(R.id.surface);
         wDisconnect = findViewById(R.id.btn_disconnect);
         wDisconnect.setOnClickListener(this);
@@ -68,11 +67,13 @@ public class MainActivity extends Activity implements View.OnClickListener, RTSP
 //                mp3Decoder.start();
 //                audioTrack.play();
 
-                try {
-                    h264Decoder = new H264Decoder(holder.getSurface(), 300, 300);
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
+//                try {
+//                    h264Decoder = new H264Decoder(holder.getSurface(), 300, 300);
+//                } catch (Exception e) {
+//                    e.printStackTrace();
+//                }
+
+                createClient(holder.getSurface());
             }
 
             @Override
@@ -87,10 +88,11 @@ public class MainActivity extends Activity implements View.OnClickListener, RTSP
         });
     }
 
-    private void createClient() {
+    private void createClient(Surface surface) {
         rtspClient = RTSPClient.create()
                 .transport(TransportMethod.TCP)
-                .setRTPPacketObserver(this)
+//                .setRTPPacketObserver(this)
+                .setSurface(surface)
                 .build();
     }
 

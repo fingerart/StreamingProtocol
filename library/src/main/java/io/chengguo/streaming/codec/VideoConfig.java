@@ -3,7 +3,9 @@ package io.chengguo.streaming.codec;
 import android.media.MediaFormat;
 
 import java.nio.ByteBuffer;
+import java.util.Arrays;
 
+import io.chengguo.streaming.utils.Bits;
 import io.chengguo.streaming.utils.Utils;
 
 public class VideoConfig {
@@ -93,10 +95,25 @@ public class VideoConfig {
             return this;
         }
 
+        @Override
+        public String toString() {
+            return "Builder{" +
+                    "mime='" + mime + '\'' +
+                    ", width=" + width +
+                    ", height=" + height +
+                    ", bitRate=" + bitRate +
+                    ", frameRate=" + frameRate +
+                    ", iFrameInterval=" + iFrameInterval +
+                    ", csd0=" + Bits.dumpBytesToHex(csd0) +
+                    ", csd1=" + Bits.dumpBytesToHex(csd1) +
+                    '}';
+        }
+
         public VideoConfig build() {
             if (Utils.isEmpty(mime)) {
                 throw new IllegalArgumentException("Mime must not be empty or null");
             }
+            System.out.println(this.toString());
             return new VideoConfig(this);
         }
     }

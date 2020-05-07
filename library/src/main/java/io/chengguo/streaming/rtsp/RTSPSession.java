@@ -1,5 +1,8 @@
 package io.chengguo.streaming.rtsp;
 
+import android.os.Build;
+import android.view.Surface;
+
 import java.io.DataInputStream;
 import java.io.IOException;
 import java.net.URI;
@@ -9,12 +12,15 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.RequiresApi;
+import io.chengguo.streaming.MediaStream;
 import io.chengguo.streaming.rtcp.RTCPResolver;
 import io.chengguo.streaming.rtcp.ReceiverReport;
 import io.chengguo.streaming.rtcp.SenderReport;
 import io.chengguo.streaming.rtcp.SourceDescription;
 import io.chengguo.streaming.rtp.RTPResolver;
 import io.chengguo.streaming.rtp.RtpPacket;
+import io.chengguo.streaming.rtp.h264.H264MediaStream;
 import io.chengguo.streaming.rtsp.header.CSeqHeader;
 import io.chengguo.streaming.rtsp.header.Header;
 import io.chengguo.streaming.rtsp.header.RangeHeader;
@@ -49,15 +55,21 @@ public class RTSPSession {
     private String mBaseUri;
     private AtomicInteger mSequence = new AtomicInteger();
     private HashMap<Integer, Request> mRequestList = new HashMap<>();
-    private IResolver.IResolverCallback<RtpPacket> mRtpResolverCallback;
     private ArrayList<IInterceptor> mInterceptors = new ArrayList<>();
     private ISessionStateObserver mSessionStateObserver;
     private SDP mSdp;
+    private MediaStream mMediaStream;
+    private Surface mSurface;
 
     public RTSPSession(String host, int port, int timeout, TransportMethod method) {
+        this(host, port, timeout, method, null);
+    }
+
+    public RTSPSession(String host, int port, int timeout, TransportMethod method, Surface surface) {
         this.mHost = host;
         this.mPort = port;
         this.method = method;
+        mSurface = surface;
         mTransport = this.method.createTransport(this.mHost, this.mPort, timeout);
         mTransport.setTransportListener(new RTSPTransportListenerWrapper(
                 createRTSPResolver(),
@@ -100,7 +112,7 @@ public class RTSPSession {
         return new IResolver.IResolverCallback<RtpPacket>() {
             @Override
             public void onResolve(RtpPacket rtpPacket) {
-                mRtpResolverCallback.onResolve(rtpPacket);
+                mMediaStream.feed(rtpPacket);
             }
         };
     }
@@ -140,6 +152,12 @@ public class RTSPSession {
                 Header<String> base = response.getHeader("Content-Base");
                 mBaseUri = base.getRawValue();
                 mSdp = SDP.parse(response.getBody().toString());
+                mMediaStream = new H264MediaStream(mSdp, mSurface);
+                try {
+                    mMediaStream.prepare();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
                 TransportHeader header = new TransportHeader.Builder()
                         .specifier(TCP)
                         .broadcastType(TransportHeader.BroadcastType.unicast)
@@ -185,15 +203,6 @@ public class RTSPSession {
 
     public boolean isPlay() {
         return mState == RtspState.PLAY;
-    }
-
-    /**
-     * 设置RTP解析回调
-     *
-     * @param rtpResolverCallback
-     */
-    public void setRTPResolverObserver(IResolver.IResolverCallback<RtpPacket> rtpResolverCallback) {
-        mRtpResolverCallback = rtpResolverCallback;
     }
 
     /**

@@ -3,9 +3,11 @@ package io.chengguo.streaming.rtp.h264;
 import android.os.Build;
 import android.util.Base64;
 import android.util.Log;
+import android.view.Surface;
 
-import java.io.IOException;
+import java.util.Objects;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.RequiresApi;
 import io.chengguo.streaming.MediaStream;
 import io.chengguo.streaming.codec.Decoder;
@@ -20,12 +22,13 @@ import io.chengguo.streaming.rtsp.sdp.SDP;
  * H264媒体流
  * 从RTP中组帧H264流媒体数据，送入解码器
  */
-@RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
 public class H264MediaStream extends MediaStream {
+    public static final int TYPE = 96;
 
     private static final String TAG = H264MediaStream.class.getSimpleName();
     private static final byte[] START_CODE = new byte[]{0, 0, 0, 1};
     private static final byte[] START_CODE_SLICE = new byte[]{0, 0, 1};
+    private final Surface mSurface;
     private byte[] sliceCache = new byte[0];
     private final SDP mSdp;
     public int sampleRate;
@@ -34,56 +37,58 @@ public class H264MediaStream extends MediaStream {
     public byte[] pps;
     private VideoDecoder mVideoDecoder;
 
-    public H264MediaStream(SDP sdp) {
-        mSdp = sdp;
-        init();
+    public H264MediaStream(@NonNull SDP sdp, @NonNull Surface surface) {
+        mSdp = Objects.requireNonNull(sdp, "sdp must not is null");
+        mSurface = Objects.requireNonNull(surface, "surface must not is null");
     }
 
-    private void init() {
+    @Override
+    public void prepare() throws Exception {
         VideoConfig.Builder vBuilder = new VideoConfig.Builder();
-        for (SDP.MediaDescription mediaDescription : mSdp.getMediaDescriptions()) {
-            if (mediaDescription.isVideo()) {
-                // rtpmap:96 H264/90000
-                String rtpmap = mediaDescription.attributes.get("rtpmap");
-                if (rtpmap != null) {
-                    String[] value = rtpmap.split(" ");
-                    if (value.length == 2) {
-                        String[] split = value[1].split("/");
-                        vBuilder.setBitRate(Integer.parseInt(split[1]));
-                    }
+        SDP.MediaDescription md = mSdp.findVideoMediaDescription();
+        if (md == null) {
+            throw new IllegalStateException("Not found video media description");
+        }
+        // rtpmap:96 H264/90000
+        String rtpmap = md.attributes.get("rtpmap");
+        if (rtpmap != null) {
+            String[] value = rtpmap.split(" ");
+            if (value.length == 2) {
+                String[] split = value[1].split("/");
+                if (Integer.parseInt(split[0]) != TYPE) {
+                    throw new IllegalStateException("media type is not " + TYPE);
                 }
-                String fmtp = mediaDescription.attributes.get("fmtp");
-                if (fmtp != null) {
-                    String[] value = fmtp.split(" ");
-                    if (value.length == 2) {
-                        String[] split = value[1].split(";");
-                        for (int i = 0; i < split.length; i++) {
-                            String[] items = split[i].split("=", 2);
-                            if (items.length == 2) {
-                                if ("packetization-mode".equals(items[0])) {
-                                    packetizationMode = Integer.parseInt(items[1]);
-                                } else if ("sprop-parameter-sets".equals(items[0])) {
-                                    String[] sets = items[1].split(",");
-                                    if (sets.length == 2) {
-                                        sps = SPS.valueOf(sets[0]);
-                                        vBuilder.setCsd0(sps.raw);
-                                        pps = Base64.decode(sets[1], Base64.DEFAULT);
-                                        vBuilder.setCsd1(pps);
-                                    }
-                                }
+                vBuilder.setBitRate(Integer.parseInt(split[1]));
+            }
+        }
+        String fmtp = md.attributes.get("fmtp");
+        if (fmtp != null) {
+            String[] value = fmtp.split(" ");
+            if (value.length == 2) {
+                String[] split = value[1].split(";");
+                for (int i = 0; i < split.length; i++) {
+                    String[] items = split[i].split("=", 2);
+                    if (items.length == 2) {
+                        if ("packetization-mode".equals(items[0])) {
+                            packetizationMode = Integer.parseInt(items[1]);
+                        } else if ("sprop-parameter-sets".equals(items[0])) {
+                            String[] sets = items[1].split(",");
+                            if (sets.length == 2) {
+                                sps = SPS.valueOf(sets[0]);
+                                vBuilder.setCsd0(sps.raw);
+                                pps = Base64.decode(sets[1], Base64.DEFAULT);
+                                vBuilder.setCsd1(pps);
+                                vBuilder.setWidth(sps.width);
+                                vBuilder.setHeight(sps.height);
+                                vBuilder.setFrameRate(30);
                             }
                         }
                     }
                 }
-                break;
             }
         }
-        mVideoDecoder = new VideoDecoder(vBuilder.build(), null);
-        try {
-            mVideoDecoder.prepare();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        mVideoDecoder = new VideoDecoder(vBuilder.build(), mSurface);
+        mVideoDecoder.prepare();
     }
 
     private byte[] fuFrame = new byte[0];
@@ -160,6 +165,7 @@ public class H264MediaStream extends MediaStream {
             sliceCache = slice;
         } else if (type == 9) {//遇到分割符，将存储的Slice送入解码器解码
 //            intoDecoder(sliceCache);
+            getDecoder().feed(sliceCache);
             sliceCache = new byte[0];
         }
 
@@ -169,6 +175,7 @@ public class H264MediaStream extends MediaStream {
             System.arraycopy(START_CODE, 0, frame, 0, 4);
             System.arraycopy(data, 0, frame, 4, data.length);
 //            intoDecoder(frame);
+            getDecoder().feed(sliceCache);
         }
     }
 

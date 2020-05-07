@@ -1,6 +1,7 @@
 package io.chengguo.streaming;
 
 import android.util.Log;
+import android.view.Surface;
 
 import java.net.URI;
 
@@ -24,13 +25,17 @@ public class RTSPClient extends Observable<RTSPClient.IRTPPacketObserver> {
     private final int timeout;
     private final TransportMethod transportMethod;
     private final IInterceptor rtspInterceptor;
+    private final Surface mSurface;
     private RTSPSession session;
 
     public RTSPClient(Builder builder) {
-        registerObserver(builder.rtpPacketReceiver);
+        if (builder.rtpPacketReceiver != null) {
+            registerObserver(builder.rtpPacketReceiver);
+        }
         timeout = builder.timeout;
         transportMethod = builder.transportMethod;
         rtspInterceptor = builder.rtspInterceptor;
+        mSurface = builder.surface;
     }
 
     public void disconnect() {
@@ -70,10 +75,9 @@ public class RTSPClient extends Observable<RTSPClient.IRTPPacketObserver> {
             }
         }
 
-        session = new RTSPSession(uri.getHost(), uri.getPort(), timeout, transportMethod);
+        session = new RTSPSession(uri.getHost(), uri.getPort(), timeout, transportMethod, mSurface);
         session.addInterceptor(rtspInterceptor);
         session.setStateObserver(mTransportListener);
-        session.setRTPResolverObserver(mRTPResolverCallback);
         session.connect(new TransportImpl.ConnectCallback() {
             @Override
             public void onSuccess() {
@@ -167,15 +171,6 @@ public class RTSPClient extends Observable<RTSPClient.IRTPPacketObserver> {
         }
     };
 
-    private final IResolver.IResolverCallback<RtpPacket> mRTPResolverCallback = new IResolver.IResolverCallback<RtpPacket>() {
-        @Override
-        public void onResolve(RtpPacket rtpPacket) {
-            for (IRTPPacketObserver observer : mObservers) {
-                observer.onReceive(rtpPacket);
-            }
-        }
-    };
-
     public static Builder create() {
         return new Builder();
     }
@@ -186,6 +181,7 @@ public class RTSPClient extends Observable<RTSPClient.IRTPPacketObserver> {
         private TransportMethod transportMethod = TransportMethod.TCP;
         private IRTPPacketObserver rtpPacketReceiver;
         private IInterceptor rtspInterceptor;
+        private Surface surface;
 
         public Builder timeout(int timeout) {
             this.timeout = timeout;
@@ -204,6 +200,11 @@ public class RTSPClient extends Observable<RTSPClient.IRTPPacketObserver> {
 
         public Builder setRTPPacketObserver(IRTPPacketObserver rtpPacketObserver) {
             this.rtpPacketReceiver = rtpPacketObserver;
+            return this;
+        }
+
+        public Builder setSurface(Surface surface) {
+            this.surface = surface;
             return this;
         }
 

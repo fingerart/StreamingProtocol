@@ -10,9 +10,9 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.Objects;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.RequiresApi;
 
-@RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
 public abstract class AndroidDecoder extends Decoder {
 
     private final String mCodecName;
@@ -34,6 +34,20 @@ public abstract class AndroidDecoder extends Decoder {
         onMediaCodecConfigured(mediaCodec);
         mediaCodec.start();
         mMediaCodec = mediaCodec;
+    }
+
+    @Override
+    public void feed(byte[] frame) {
+        int index = dequeueInputBuffer(0);
+        if (index>0) {
+            ByteBuffer in = getInputBuffer(index);
+            in.put(frame);
+        }
+    }
+
+    @Override
+    public void onOutput(byte[] frame) {
+
     }
 
     @Override
