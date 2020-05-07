@@ -40,7 +40,7 @@ public class H264Decoder {
         mSurface = surface;
         executor = Executors.newCachedThreadPool();
         videoFormat = MediaFormat.createVideoFormat(MediaFormat.MIMETYPE_VIDEO_AVC, width, height);
-        videoFormat.setInteger(MediaFormat.KEY_FRAME_RATE, 25);
+        videoFormat.setInteger(MediaFormat.KEY_FRAME_RATE, 20);
         videoFormat.setInteger(MediaFormat.KEY_BIT_RATE, 90000);
 //        videoFormat.setInteger(MediaFormat.KEY_I_FRAME_INTERVAL, 1);
     }

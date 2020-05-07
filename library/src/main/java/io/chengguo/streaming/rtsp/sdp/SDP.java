@@ -88,6 +88,15 @@ public class SDP {
         return mediaDescriptions;
     }
 
+    public MediaDescription findVideoMediaDescription() {
+        for (SDP.MediaDescription mediaDescription : getMediaDescriptions()) {
+            if (mediaDescription.isVideo()) {
+                return mediaDescription;
+            }
+        }
+        return null;
+    }
+
     public static SDP parse(String text) {
         SDP sdp = new SDP();
         String[] lines = text.split("\r\n|\n");

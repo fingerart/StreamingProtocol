@@ -10,7 +10,6 @@ import androidx.annotation.RequiresApi;
 /**
  * 视频解码器
  */
-@RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
 public class VideoDecoder extends AndroidDecoder {
 
     private final VideoConfig mConfig;
