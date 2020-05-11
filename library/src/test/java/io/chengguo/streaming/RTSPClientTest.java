@@ -26,12 +26,12 @@ public class RTSPClientTest {
     @Before
     public void setUp() throws Exception {
         session = new RTSPSession("127.0.0.1", 554, 2000, TransportMethod.TCP);
-        session.setRTPResolverObserver(new IResolver.IResolverCallback<RtpPacket>() {
-            @Override
-            public void onResolve(RtpPacket rtpPacket) {
-                System.out.println("RTP packet: " + rtpPacket);
-            }
-        });
+//        session.setRTPResolverObserver(new IResolver.IResolverCallback<RtpPacket>() {
+//            @Override
+//            public void onResolve(RtpPacket rtpPacket) {
+//                System.out.println("RTP packet: " + rtpPacket);
+//            }
+//        });
     }
 
     @Test

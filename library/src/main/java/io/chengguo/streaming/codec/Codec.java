@@ -6,8 +6,6 @@ public interface Codec {
 
     void feed(byte[] frame);
 
-    void onOutput(byte[] frame);
-
     void prepare() throws IOException;
 
     void stop();

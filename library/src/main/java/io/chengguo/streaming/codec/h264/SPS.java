@@ -23,21 +23,23 @@ public class SPS extends Frame {
         return valueOf(buffer);
     }
 
+    //FIXME 正确解析width和height
     public static SPS valueOf(ByteBuffer buffer) {
         SPS sps = new SPS();
         sps.raw = buffer.array();
-        sps.parseType(buffer.get());
-        sps.parseProfile(buffer.get());
+        sps.parseType(buffer.get());// forbidden_zero_bit    nal_ref_idc    nal_unit_type
+        sps.parseProfile(buffer.get());// baseline profile
         byte b = buffer.get();
         sps.parseSetFlag(((byte) (b >> 2)));
         byte pre = buffer.get(5);
         byte next = buffer.get(6);
         int widthMarco = ((pre & 0x7) << 8) | next;
-        sps.width = (widthMarco + 0) * 16;
+        sps.width = (widthMarco + 1) * 16;
+
         pre = buffer.get(7);
         next = buffer.get(8);
         int heightMarco = (pre << 1) | (next >> 7 & 0x1);
-        sps.height = (heightMarco + 0) * 16;
+        sps.height = (heightMarco + 1) * 16;
         return sps;
     }
 

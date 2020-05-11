@@ -1,5 +1,6 @@
 package io.chengguo.streaming.rtp.h264;
 
+import android.media.MediaFormat;
 import android.os.Build;
 import android.util.Base64;
 import android.util.Log;
@@ -9,6 +10,7 @@ import java.util.Objects;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.RequiresApi;
+
 import io.chengguo.streaming.MediaStream;
 import io.chengguo.streaming.codec.Decoder;
 import io.chengguo.streaming.codec.VideoConfig;
@@ -17,6 +19,7 @@ import io.chengguo.streaming.codec.h264.SPS;
 import io.chengguo.streaming.exceptions.NotSupportException;
 import io.chengguo.streaming.rtp.RtpPacket;
 import io.chengguo.streaming.rtsp.sdp.SDP;
+import io.chengguo.streaming.utils.Utils;
 
 /**
  * H264媒体流
@@ -51,42 +54,55 @@ public class H264MediaStream extends MediaStream {
         }
         // rtpmap:96 H264/90000
         String rtpmap = md.attributes.get("rtpmap");
-        if (rtpmap != null) {
-            String[] value = rtpmap.split(" ");
-            if (value.length == 2) {
-                String[] split = value[1].split("/");
-                if (Integer.parseInt(split[0]) != TYPE) {
-                    throw new IllegalStateException("media type is not " + TYPE);
-                }
-                vBuilder.setBitRate(Integer.parseInt(split[1]));
-            }
+        if (Utils.isEmpty(rtpmap)) {
+            throw new IllegalStateException("not found rtpmap");
         }
+        String[] rtpmapItems = rtpmap.split(" ");
+        if (rtpmapItems.length != 2) {
+            throw new IllegalStateException("rtpmap format error");
+        }
+        if (Integer.parseInt(rtpmapItems[0]) != TYPE) {
+            throw new IllegalStateException("media type is not " + TYPE);
+        }
+        String[] rtpmapH264 = rtpmapItems[1].split("/");
+        if (rtpmapH264.length != 2) {
+            throw new IllegalStateException("rtpmap ");
+        }
+        vBuilder.setBitRate(Integer.parseInt(rtpmapH264[1]));
+
+        //fmtp:96 packetization-mode=1;profile-level-id=42E00B;sprop-parameter-sets=J0LgC6kYYJ2ANQYBBrbCte98BA==,KN4JiA==
         String fmtp = md.attributes.get("fmtp");
-        if (fmtp != null) {
-            String[] value = fmtp.split(" ");
-            if (value.length == 2) {
-                String[] split = value[1].split(";");
-                for (int i = 0; i < split.length; i++) {
-                    String[] items = split[i].split("=", 2);
-                    if (items.length == 2) {
-                        if ("packetization-mode".equals(items[0])) {
-                            packetizationMode = Integer.parseInt(items[1]);
-                        } else if ("sprop-parameter-sets".equals(items[0])) {
-                            String[] sets = items[1].split(",");
-                            if (sets.length == 2) {
-                                sps = SPS.valueOf(sets[0]);
-                                vBuilder.setCsd0(sps.raw);
-                                pps = Base64.decode(sets[1], Base64.DEFAULT);
-                                vBuilder.setCsd1(pps);
-                                vBuilder.setWidth(sps.width);
-                                vBuilder.setHeight(sps.height);
-                                vBuilder.setFrameRate(30);
-                            }
-                        }
+        if (Utils.isEmpty(fmtp)) {
+            throw new IllegalStateException("not found fmtp");
+        }
+        String[] fmtpItems = fmtp.split(" ");
+        if (fmtpItems.length != 2) {
+            throw new IllegalStateException("fmtp format error");
+        }
+        if (Integer.parseInt(fmtpItems[0]) != TYPE) {
+            throw new IllegalStateException("media type is not " + TYPE);
+        }
+        String[] infos = fmtpItems[1].split(";");
+        for (String info : infos) {
+            String[] items = info.split("=", 2);
+            if (items.length == 2) {
+                if ("packetization-mode".equals(items[0])) {
+                    packetizationMode = Integer.parseInt(items[1]);
+                } else if ("sprop-parameter-sets".equals(items[0])) {
+                    String[] sets = items[1].split(",");
+                    if (sets.length == 2) {
+                        sps = SPS.valueOf(sets[0]);
+                        vBuilder.setCsd0(sps.raw);
+                        pps = Base64.decode(sets[1], Base64.DEFAULT);
+                        vBuilder.setCsd1(pps);
+                        vBuilder.setWidth(/*sps.width*/192);
+                        vBuilder.setHeight(/*sps.height*/144);
+                        vBuilder.setFrameRate(25);
                     }
                 }
             }
         }
+        vBuilder.setMime(MediaFormat.MIMETYPE_VIDEO_AVC);
         mVideoDecoder = new VideoDecoder(vBuilder.build(), mSurface);
         mVideoDecoder.prepare();
     }
@@ -94,7 +110,7 @@ public class H264MediaStream extends MediaStream {
     private byte[] fuFrame = new byte[0];
 
     @Override
-    public void feed(RtpPacket packet) {
+    public void feedPacket(RtpPacket packet) {
         byte[] fragment = packet.getPayload();
         // 解H264帧
         byte nalutype = getNALUType(fragment[0]);

@@ -11,4 +11,6 @@ public interface ISessionStateObserver {
     }
 
     void onConnectChanged(@SessionState int state);
+
+    void onError(Exception exception);
 }
