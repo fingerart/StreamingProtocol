@@ -1,6 +1,5 @@
 package io.chengguo.streaming.rtsp;
 
-import android.os.Build;
 import android.view.Surface;
 
 import java.io.DataInputStream;
@@ -12,7 +11,7 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import androidx.annotation.NonNull;
-import androidx.annotation.RequiresApi;
+
 import io.chengguo.streaming.MediaStream;
 import io.chengguo.streaming.rtcp.RTCPResolver;
 import io.chengguo.streaming.rtcp.ReceiverReport;
@@ -57,7 +56,6 @@ public class RTSPSession {
     private HashMap<Integer, Request> mRequestList = new HashMap<>();
     private ArrayList<IInterceptor> mInterceptors = new ArrayList<>();
     private ISessionStateObserver mSessionStateObserver;
-    private SDP mSdp;
     private MediaStream mMediaStream;
     private Surface mSurface;
 
@@ -95,12 +93,19 @@ public class RTSPSession {
                     mSession = sessionHeader.getSession();
                 }
                 for (IInterceptor interceptor : mInterceptors) {
-                    interceptor.onResponse(response);
+                    response = interceptor.onResponse(response);
                 }
-                if (response.getLine().isSuccessful()) {
-                    Request nextRequest = makeNextRequest(response);
-                    if (nextRequest != null && nextRequest.getLine().getMethod() != null) {
-                        send(nextRequest);
+                if (response != null && response.getLine().isSuccessful()) {
+                    try {
+                        Request nextRequest = makeNextRequest(response);
+                        if (nextRequest != null && nextRequest.getLine().getMethod() != null) {
+                            send(nextRequest);
+                        }
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                        if (mSessionStateObserver != null) {
+                            mSessionStateObserver.onError(e);
+                        }
                     }
                 }
             }
@@ -112,7 +117,7 @@ public class RTSPSession {
         return new IResolver.IResolverCallback<RtpPacket>() {
             @Override
             public void onResolve(RtpPacket rtpPacket) {
-                mMediaStream.feed(rtpPacket);
+                mMediaStream.feedPacket(rtpPacket);
             }
         };
     }
@@ -139,7 +144,7 @@ public class RTSPSession {
         };
     }
 
-    private Request makeNextRequest(Response response) {
+    private Request makeNextRequest(Response response) throws Exception {
         Request.Builder builder = new Request.Builder();
         Request prevRequest = response.getRequest();
         switch (prevRequest.getLine().getMethod()) {
@@ -151,18 +156,14 @@ public class RTSPSession {
                 mState = RtspState.DESCRIBE;
                 Header<String> base = response.getHeader("Content-Base");
                 mBaseUri = base.getRawValue();
-                mSdp = SDP.parse(response.getBody().toString());
-                mMediaStream = new H264MediaStream(mSdp, mSurface);
-                try {
-                    mMediaStream.prepare();
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
+                SDP sdp = SDP.parse(response.getBody().toString());
+                mMediaStream = new H264MediaStream(sdp, mSurface);
+                mMediaStream.prepare();
                 TransportHeader header = new TransportHeader.Builder()
                         .specifier(TCP)
                         .broadcastType(TransportHeader.BroadcastType.unicast)
                         .build();
-                List<SDP.MediaDescription> md = mSdp.getMediaDescriptions();
+                List<SDP.MediaDescription> md = sdp.getMediaDescriptions();
                 builder.method(Method.SETUP).uri(URI.create(mBaseUri + md.get(0).mediaControl)).addHeader(header);
                 break;
             case SETUP://3. next is play
@@ -229,7 +230,7 @@ public class RTSPSession {
         sb.append(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>").append(request.getLine().getMethod()).append("\r\n")
                 .append(request.toString())
                 .append(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>> ").append(request.getLine().getMethod());
-        System.out.println(sb);
+        L.d(sb.toString());
 
         for (IInterceptor Interceptor : mInterceptors) {
             request = Interceptor.onSend(request, null);
@@ -242,7 +243,6 @@ public class RTSPSession {
         if (request.getLine().getMethod() == Method.TEARDOWN) {
             mSession = null;
             mBaseUri = null;
-            mSdp = null;
         }
 
         //发送请求

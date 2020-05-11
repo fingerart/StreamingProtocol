@@ -5,6 +5,8 @@ import org.junit.Test;
 import java.nio.ByteBuffer;
 import java.util.Base64;
 
+import io.chengguo.streaming.utils.Bits;
+
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.*;
 
@@ -26,5 +28,15 @@ public class SPSTest {
         assertThat(sps.type.forbidden, is(0));
         assertThat(sps.type.refIdc, is(3));
         assertThat(sps.type.type, is(7));
+    }
+
+    @Test
+    public void testWidthHeight() {
+        byte[] spsBytes = Base64.getDecoder().decode("J0LgC6kYYJ2ANQYBBrbCte98BA==");
+        System.out.println(Bits.dumpBytesToBinary(spsBytes));
+        System.out.println(Bits.dumpBytesToHex(spsBytes));
+        SPS sps = SPS.valueOf(ByteBuffer.wrap(spsBytes));
+        assertThat(sps.width, is(192));
+        assertThat(sps.height, is(144));
     }
 }

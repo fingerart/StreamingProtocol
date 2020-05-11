@@ -1,18 +1,22 @@
 package io.chengguo.streaming.codec;
 
 import android.media.MediaCodec;
-import android.media.MediaCrypto;
 import android.media.MediaFormat;
 import android.os.Build;
 import android.view.Surface;
+
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.annotation.RequiresApi;
+
+import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.Objects;
 
-import androidx.annotation.NonNull;
-import androidx.annotation.RequiresApi;
-
+@RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
 public abstract class AndroidDecoder extends Decoder {
 
     private final String mCodecName;
@@ -39,15 +43,12 @@ public abstract class AndroidDecoder extends Decoder {
     @Override
     public void feed(byte[] frame) {
         int index = dequeueInputBuffer(0);
-        if (index>0) {
-            ByteBuffer in = getInputBuffer(index);
-            in.put(frame);
+        if (index > 0) {
+            ByteBuffer buffer = getInputBuffer(index);
+            buffer.clear();
+            buffer.put(frame);
+            queueInputBuffer(index, 0, frame.length, System.nanoTime() / 1000, 0);
         }
-    }
-
-    @Override
-    public void onOutput(byte[] frame) {
-
     }
 
     @Override
@@ -81,6 +82,10 @@ public abstract class AndroidDecoder extends Decoder {
         return getCodec().dequeueInputBuffer(timeoutUs);
     }
 
+    public int dequeueOutputBuffer(MediaCodec.BufferInfo info, long timeoutUs) {
+        return getCodec().dequeueOutputBuffer(info, timeoutUs);
+    }
+
     public void releaseOutputBuffer(int index, boolean render) {
         getCodec().releaseOutputBuffer(index, render);
     }
@@ -103,6 +108,7 @@ public abstract class AndroidDecoder extends Decoder {
     protected Surface createPreviewSurface() {
         return null;
     }
+
 
     protected abstract MediaFormat createMediaFormat();
 

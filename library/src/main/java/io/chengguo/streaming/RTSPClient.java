@@ -15,6 +15,7 @@ import io.chengguo.streaming.rtsp.Request;
 import io.chengguo.streaming.transport.SendCallback;
 import io.chengguo.streaming.transport.TransportImpl;
 import io.chengguo.streaming.transport.TransportMethod;
+import io.chengguo.streaming.utils.L;
 
 /**
  * RTSPClient
@@ -36,6 +37,7 @@ public class RTSPClient extends Observable<RTSPClient.IRTPPacketObserver> {
         transportMethod = builder.transportMethod;
         rtspInterceptor = builder.rtspInterceptor;
         mSurface = builder.surface;
+        L.setEnabled(true);
     }
 
     public void disconnect() {
@@ -97,11 +99,11 @@ public class RTSPClient extends Observable<RTSPClient.IRTPPacketObserver> {
 
     public void resume() {
         if (!isConnected()) {
-            Log.e(TAG, "session is not connection");
+            L.e(TAG, "session is not connection");
             return;
         }
         if (!session.isPause()) {
-            Log.e(TAG, "session state is not pause");
+            L.e(TAG, "session state is not pause");
             return;
         }
         Request request = new Request.Builder()
@@ -112,12 +114,12 @@ public class RTSPClient extends Observable<RTSPClient.IRTPPacketObserver> {
 
     public void pause() {
         if (!isConnected()) {
-            Log.e(TAG, "session is not connection");
+            L.e(TAG, "session is not connection");
             return;
         }
 
         if (!session.isPlay()) {
-            Log.e(TAG, "session state is not play");
+            L.e(TAG, "session state is not play");
             return;
         }
 
@@ -133,7 +135,7 @@ public class RTSPClient extends Observable<RTSPClient.IRTPPacketObserver> {
 
     private void teardown(SendCallback sendCallback) {
         if (!isConnected()) {
-            Log.e(TAG, "session is not connection");
+            L.e(TAG, "session is not connection");
             return;
         }
         Request stop = new Request.Builder()
@@ -144,7 +146,7 @@ public class RTSPClient extends Observable<RTSPClient.IRTPPacketObserver> {
 
     public void send(Request request) {
         if (!isConnected()) {
-            Log.e(TAG, "session is not connection");
+            L.e(TAG, "session is not connection");
             return;
         }
         session.send(request);
@@ -168,6 +170,11 @@ public class RTSPClient extends Observable<RTSPClient.IRTPPacketObserver> {
                         break;
                 }
             }
+        }
+
+        @Override
+        public void onError(Exception exception) {
+
         }
     };
 
